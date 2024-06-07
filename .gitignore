@@ -1,2 +1,4 @@
 __pycache__
 django/db.sqlite3
+django/media/*
+django/env
