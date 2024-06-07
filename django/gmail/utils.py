@@ -1,7 +1,11 @@
+import json
+import time
+import base64
+from email import policy
+from email.parser import BytesParser
 from gtts import gTTS
 from django.conf import settings
 import os
-import os.path
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -47,20 +51,40 @@ def get_labels():
     try:
         # Call the Gmail API
         service = build("gmail", "v1", credentials=creds)
-        results = service.users().labels().list(userId="me").execute()
-        labels = results.get("labels", [])
+        results = service.users().messages().list(userId="me", q="is:unread").execute()
+        print("results:\n", results)
+        resource_value = results.get("messages", [])
 
-        if not labels:
-            print("No labels found.")
+
+        if not resource_value:
+            print("No resource found.")
             return
 
         labels_string = ""
-        for label in labels:
-            label_name = label.get("name")
-            labels_string += label_name + "\n"
+        for message in resource_value:
+            msg = service.users().messages().get(userId="me", id=message['id'], format='raw').execute()
+            msg_str = base64.urlsafe_b64decode(msg['raw'].encode('ASCII'))
+            mime_message = BytesParser(policy=policy.default).parsebytes(msg_str)
+
+            # Extract parts of the decoded message
+            subject = mime_message['subject']
+            sender = mime_message['from']
+            print("mime_message:\n", mime_message)
+            if mime_message.is_multipart():
+                for part in mime_message.iter_parts():
+                    if part.get_content_type() == 'text/plain':
+                        body = part.get_payload(decode=True).decode('utf-8')
+                        break
+                print("Mime message is multipart!")
+                print("body:\n", body)
+            else:
+                print("Mime message NOT multipart!")
+                body = mime_message.get_payload(decode=True)
+            print("body:\n", body)
+            # time.sleep(10)
 
     except HttpError as error:
         # Handle errors from Gmail API.
         print(f"An error occurred: {error}")
 
-    return labels_string
+    return body
