@@ -1,4 +1,5 @@
 __pycache__
 django/db.sqlite3
-django/media/*
+django/media/email_audio.mp3
 django/env
+django/google/*
