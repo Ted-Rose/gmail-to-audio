@@ -11,19 +11,26 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from typing import List
 
-def text_to_audio(text: str, lang: str = 'en') -> str:
+def text_to_audio(text: str, lang: str = 'en', file_name: str = None) -> str:
     lang = 'en' if lang is None else lang
+    print("\nstring: ", text)
+    print("lang: ", lang)
+    print("slow: ", False)
     audio = gTTS(text=text, lang=lang, slow=False)
-    audio_file_path = os.path.join(settings.MEDIA_ROOT, 'email_audio.mp3')
-
+    file_name = 'message_audio.mp3' if file_name is None else str(file_name) + '.mp3'
+    print("file_name: ", file_name)
+    # TODO add save in recordings directory
+    audio_file_path = os.path.join(settings.MEDIA_ROOT, file_name)
+    print("Saved audio to: ", audio_file_path)
     audio.save(audio_file_path)
-    return os.path.join(settings.MEDIA_URL, 'email_audio.mp3')
+    return file_name
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
-def get_labels():
+def get_message_ids():
     """
     Shows basic usage of the Gmail API.
     Lists the user's Gmail labels.
@@ -51,40 +58,49 @@ def get_labels():
     try:
         # Call the Gmail API
         service = build("gmail", "v1", credentials=creds)
-        results = service.users().messages().list(userId="me", q="is:unread").execute()
+        results = service.users().messages().list(userId="me", q="is:unread", maxResults=100).execute()
         print("results:\n", results)
-        resource_value = results.get("messages", [])
+        messages = results.get("messages", [])
+        message_ids = [message['id'] for message in messages]
 
-
-        if not resource_value:
-            print("No resource found.")
+        if not messages:
+            print("No messages found.")
             return
-
-        labels_string = ""
-        for message in resource_value:
-            msg = service.users().messages().get(userId="me", id=message['id'], format='raw').execute()
-            msg_str = base64.urlsafe_b64decode(msg['raw'].encode('ASCII'))
-            mime_message = BytesParser(policy=policy.default).parsebytes(msg_str)
-
-            # Extract parts of the decoded message
-            subject = mime_message['subject']
-            sender = mime_message['from']
-            print("mime_message:\n", mime_message)
-            if mime_message.is_multipart():
-                for part in mime_message.iter_parts():
-                    if part.get_content_type() == 'text/plain':
-                        body = part.get_payload(decode=True).decode('utf-8')
-                        break
-                print("Mime message is multipart!")
-                print("body:\n", body)
-            else:
-                print("Mime message NOT multipart!")
-                body = mime_message.get_payload(decode=True)
-            print("body:\n", body)
-            # time.sleep(10)
 
     except HttpError as error:
         # Handle errors from Gmail API.
         print(f"An error occurred: {error}")
 
-    return body
+    return message_ids, service
+
+
+def create_message_audios(message_ids: List[str], service: build):
+    print("In create_message_audios")
+    ready_to_play_audio = False
+    print("message_ids:\n", message_ids)
+    for message_id in message_ids:
+        print("service in create_message_audios:\n", service)
+        msg = service.users().messages().get(userId="me", id=message_id, format='raw').execute()
+        msg_str = base64.urlsafe_b64decode(msg['raw'].encode('ASCII'))
+        mime_message = BytesParser(policy=policy.default).parsebytes(msg_str)
+
+        # Extract parts of the decoded message
+        subject = mime_message['subject']
+        sender = mime_message['from']
+        print("mime_message:\n", mime_message)
+        body = None
+        charset = mime_message.get_content_charset('utf-8')
+        if mime_message.is_multipart():
+            for part in mime_message.iter_parts():
+                if part.get_content_type() == 'text/plain':
+                    body = part.get_payload(decode=True).decode(charset, errors='replace')
+                    break
+            if not body:
+                body = 'Multipart message without plain text part!'
+        else:
+            body = mime_message.get_payload(decode=True).decode(charset, errors='replace')
+
+        print("body:\n", body)
+        text_to_audio(text=body, file_name=message_id)
+    ready_to_play_audio = True
+    return ready_to_play_audio

@@ -8,11 +8,31 @@
 </head>
 
 <body>
-    <h1>Reading email</h1>
+    {% if not messages %}
+        <h1>Lets read some mail?</h1>
+        <form method="get" action="">
+            <button type="submit" name="get_message_ids">Get All Emails</button>
+        </form>
+    {% endif %}
+
+    <!-- Display email list if available -->
+    {% if message_ids %}
+    <h2>Found some emails!</h2>
+    <form method="get" action="">
+        <button type="submit" name="create_message_audios">Read all emails!</button>
+    </form>
+    {% endif %}
+
+    <!-- Display audio if available -->
+    {% if created_audios %}
+    <div>Lets gooo!</div>
+    {% for audio_url in message_ids %}
     <audio controls autoplay>
         <source src="{{ audio_url }}" type="audio/mp3">
         Your browser does not support the audio element.
     </audio>
+    {% endfor %}
+    {% endif %}
 </body>
 
 </html>
