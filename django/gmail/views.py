@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from gmail.utils import get_message_ids, create_message_audio
 from django.conf import settings
+from django.http import JsonResponse
 
 
 def index(request):
@@ -26,3 +27,15 @@ def index(request):
 
     # Default behavior: read emails from labels and convert to audio
     return render(request, 'index.html')
+
+
+def audio(request):
+    if request.method == 'GET':
+        message_id = request.GET.get('message_id')
+        create_message_audio(message_id)
+        audio_url = settings.MEDIA_URL + 'recordings/' + message_id + '.mp3'
+        # Return the audio URL as JSON response
+        return JsonResponse({'audio_url': audio_url})
+    else:
+        # Return a 405 Method Not Allowed response for other request methods
+        return JsonResponse({'error': 'Method Not Allowed'}, status=405)

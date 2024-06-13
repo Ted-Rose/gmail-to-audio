@@ -9,10 +9,17 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import re
 
 
 def text_to_audio(text: str, lang: str = 'en', file_name: str = None) -> str:
     lang = 'en' if lang is None else lang
+
+    # Replace URLs with the word "url"
+    text = re.sub(r'https?://\S+', 'web link', text)
+    # Remove long dashes
+    text = re.sub(r'-{2,}', '', text)
+
     print("\nText to audio:\n", text)
     # print("lang: ", lang)
     # print("slow: ", False)
