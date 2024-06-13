@@ -9,30 +9,37 @@
 
 <body>
     {% if not messages %}
-        <h1>Lets read some mail?</h1>
+        <h1>Get emails!</h1>
         <form method="get" action="">
-            <button type="submit" name="get_message_ids">Get All Emails</button>
+            <button type="submit" name="get_message_ids">Get Emails</button>
         </form>
     {% endif %}
 
     <!-- Display email list if available -->
     {% if message_ids %}
-    <h2>Found some emails!</h2>
-    <form method="get" action="">
-        <button type="submit" name="create_message_audios">Read all emails!</button>
-    </form>
+        <h2>Found some emails!</h2>
+
+        <!-- Display audio if available -->
+        {% if created_audios and audio_url %}
+        <div>Audio Created!</div>
+        <audio controls autoplay>
+            <source src="{{ audio_url }}" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+        {% endif %}
+
+        <form method="get" action="">
+            <button type="submit" name="create_message_audios">Read all emails!</button>
+        </form>
+        {%  for message_id in message_ids %}
+            <p>Message: {{ message_id }}</p>
+            <form method="get" action="">
+                <input type="hidden" name="message_id" value="{{ message_id }}">
+                <button type="submit" name="create_message_audio">Create Audio</button>
+            </form>
+        {% endfor %}
     {% endif %}
 
-    <!-- Display audio if available -->
-    {% if created_audios %}
-    <div>Lets gooo!</div>
-    {% for audio_url in message_ids %}
-    <audio controls autoplay>
-        <source src="{{ audio_url }}" type="audio/mp3">
-        Your browser does not support the audio element.
-    </audio>
-    {% endfor %}
-    {% endif %}
 </body>
 
 </html>
