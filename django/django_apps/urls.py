@@ -1,5 +1,5 @@
 """
-URL configuration for gmail_to_audio project.
+URL configuration for django_apps project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.2/topics/http/urls/

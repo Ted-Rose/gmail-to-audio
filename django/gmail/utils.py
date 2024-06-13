@@ -22,7 +22,11 @@ def text_to_audio(text: str, lang: str = 'en', file_name: str = None) -> str:
     file_name = 'message_audio.mp3' if file_name is None else str(file_name) + '.mp3'
     print("file_name: ", file_name)
     # TODO add save in recordings directory
-    audio_file_path = os.path.join(settings.MEDIA_ROOT, file_name)
+    audio_file_path = os.path.join(
+        settings.MEDIA_ROOT,
+        "recordings",
+        file_name
+    )
     print("Saved audio to: ", audio_file_path)
     audio.save(audio_file_path)
     return file_name
