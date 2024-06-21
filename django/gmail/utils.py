@@ -51,7 +51,7 @@ def build_google_service():
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            can_refresh = creds.expiry > datetime.today()
+            can_refresh = creds.expiry < datetime.today()
             if can_refresh:
                 creds.refresh(Request())
             else:
