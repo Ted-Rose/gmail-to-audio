@@ -10,6 +10,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import re
+from datetime import datetime
+
 
 
 def text_to_audio(text: str, lang: str = 'en', file_name: str = None) -> str:
@@ -49,8 +51,12 @@ def build_google_service():
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
+            can_refresh = creds.expiry > datetime.today()
+            if can_refresh:
+                creds.refresh(Request())
+            else:
+                creds = None  # Set creds to None to ensure we run the OAuth flow
+        if not creds or not creds.valid:
             flow = InstalledAppFlow.from_client_secrets_file(
                 client_secrets_path, scopes
             )
@@ -73,26 +79,6 @@ def get_message_ids():
     Shows basic usage of the Gmail API.
     Lists the user's Gmail labels.
     """
-    # creds = None
-    # token_path = os.path.join(settings.BASE_DIR, 'google/token.json')
-    # client_secrets_path = os.path.join(settings.BASE_DIR, 'google/app_secrets.json')
-
-    # if os.path.exists(token_path):
-    #     creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-
-    # # If there are no (valid) credentials available, let the user log in.
-    # if not creds or not creds.valid:
-    #     if creds and creds.expired and creds.refresh_token:
-    #         creds.refresh(Request())
-    #     else:
-    #         flow = InstalledAppFlow.from_client_secrets_file(
-    #             client_secrets_path, SCOPES
-    #         )
-    #         creds = flow.run_local_server(port=0)
-
-    #     with open(token_path, "w") as token:
-    #         token.write(creds.to_json())
-
     try:
         # Call the Gmail API
         service = build_google_service()
@@ -108,7 +94,7 @@ def get_message_ids():
     except HttpError as error:
         # Handle errors from Gmail API.
         print(f"An error occurred: {error}")
-    print("Returning message_ids:\n", message_ids)
+    # print("Returning message_ids:\n", message_ids)
     return message_ids
 
 
@@ -120,8 +106,8 @@ def create_message_audio(message_id: str) -> str:
     mime_message = BytesParser(policy=policy.default).parsebytes(msg_str)
 
     # Extract parts of the decoded message
-    subject = mime_message['subject']
-    sender = mime_message['from']
+    # subject = mime_message['subject']
+    # sender = mime_message['from']
     # print("mime_message:\n", mime_message)
     body = None
     charset = mime_message.get_content_charset('utf-8')
