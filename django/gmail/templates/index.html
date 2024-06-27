@@ -19,10 +19,6 @@
     {% if message_ids %}
         <h2>Found some emails!</h2>
 
-        <form method="get" action="" id="read-all-emails-form">
-            <button type="button" id="read-all-emails">Read all emails!</button>
-        </form>
-
         {% for message_id in message_ids %}
         <div id="message-{{ message_id }}-container">
             <p>Message: {{ message_id }}</p>
@@ -36,29 +32,52 @@
         {% endfor %}
     {% endif %}
 
-    <script data-messages="{{ message_ids }}">
+    <script data-messages="{{ message_ids | safe }}">
         let currentIndex = 0;
-        let audioUrls = [];
         const data = document.currentScript.dataset;
-        const messageIds = data.messages;
-        <!-- console.log("messageIds: ", messageIds); -->
+        const messageIdsArrayString = data.messages;
+        // Convert string to array
+        let messageIdsArray = messageIdsArrayString.replace(/^\[|\]$/g, "").split(", ");
 
-        document.getElementById('read-all-emails').addEventListener('click', function () {
-            console.log("Clicked button!")
-            createAllAudios();
-        });
+        console.log("messageIdsArrayArray: ", messageIdsArray);
+        console.log("typeof messageIdsArrayArray", typeof messageIdsArray)
+        let messagesArray = []
 
-        function createAllAudios() {
-            for (let messageId of messageIds) {
-                createAudio(messageId);
-            }
+        function createAllAudios(firstMessageId) {
+          // Create an audio player for all messages starting from firstMessageId
+          const startIndex = messageIdsArray.indexOf(firstMessageId);
+          console.log("startIndex: ", startIndex);
+          console.log("firstMessageId: ", firstMessageId);
+          if (startIndex === -1) {
+              console.error("Invalid messageId");
+              return;
+          }
+
+          let endIndex = startIndex - 1;
+          if (endIndex < 0) {
+              endIndex = messageIdsArray.length - 1;
+          }
+
+          for (let i = startIndex; i !== endIndex; i = (i + 1) % messageIdsArray.length) {
+            console.log("messageIdsArray[" + i + "]:", messageIdsArray[i]); // Corrected logging statement
+            messagesArray.push(messageIdsArray[i]);
+              if (i === startIndex + 2) {
+                break;
+              }
+          }
+          console.log("messagesArray: ", messagesArray);
+      }
+
+
+        function playAllAudios() {
+
         }
 
+        // Create an audio player for message
         function createAudio(messageId, autoplay = false) {
             fetch(`/audio?message_id=${messageId}`)
                 .then(response => response.json())
                 .then(data => {
-                    audioUrls.push(data.audio_url);
                     let audioPlayer = document.createElement('audio');
                     audioPlayer.controls = true;
                     audioPlayer.src = data.audio_url;
@@ -72,24 +91,25 @@
 
             };
 
-            const createAudioButtons = document.querySelectorAll('.play-audio');
-            createAudioButtons.forEach(button => {
+            const playAudioButtons = document.querySelectorAll('.play-audio');
+            playAudioButtons.forEach(button => {
                 button.addEventListener('click', function () {
                     let form = this.parentElement;
                     let messageId = form.querySelector('input[name="message_id"]').value;
-                    console.log("messageId in click: ", messageId);
+                    console.log("messageId clicked: ", messageId);
                     createAudio(messageId, autoplay = true);
                 });
             });
 
-                const createAllAudioButtons = document.querySelectorAll('.play-all-audio');
-                createAllAudioButtons.forEach(button => {
-                    button.addEventListener('click', function () {
-                        let form = this.parentElement;
-                        let messageId = form.querySelector('input[name="message_id"]').value;
-                        console.log("messageId in click: ", messageId);
-                        createAllAudios();
-                    });
+            const createAllAudioButtons = document.querySelectorAll('.play-all-audios');
+            createAllAudioButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    let form = this.parentElement;
+                    let messageId = form.querySelector('input[name="message_id"]').value;
+                    console.log("messageId in click: ", messageId);
+                    // Create all audios starting from current message
+                    createAllAudios(messageId);
+                });
             });
     </script>
 </body>

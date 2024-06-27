@@ -13,7 +13,6 @@ import re
 from datetime import datetime
 
 
-
 def text_to_audio(text: str, lang: str = 'en', file_name: str = None) -> str:
     lang = 'en' if lang is None else lang
 
