@@ -11,8 +11,10 @@
     {% if not messages %}
     <h1>Get emails!</h1>
     <form method="get" action="">
-        <button type="submit" name="get_message_ids">Get Emails</button>
-    </form>
+      <label for="query">Filter what emails you would like to fetch:</label>
+      <input type="text" id="query" name="query" value="is: unread">
+      <button type="submit" name="get_message_ids">Get Emails</button>
+  </form>
     {% endif %}
 
     <!-- Display email list if available -->

@@ -6,9 +6,8 @@ from django.http import JsonResponse
 
 def index(request):
     if 'get_message_ids' in request.GET:
-        # Call the get_emails method when the button is clicked
-        message_ids = get_message_ids()
-        # created_audios = create_message_audios(message_ids)
+        query = request.GET.get('query', '')
+        message_ids = get_message_ids(query=query)
         request.session['message_ids'] = message_ids
         context = {'message_ids': message_ids}
         return render(request, 'index.html', context)
@@ -27,6 +26,7 @@ def index(request):
 
     # Default behavior: read emails from labels and convert to audio
     return render(request, 'index.html')
+
 
 
 def audio(request):
