@@ -46,7 +46,7 @@
         let AutoplayIds = []
 
 
-        function createAllAudios(firstMessageId) {
+        function createAllAudios(firstMessageId, playOnlyFirst = false) {
           AutoplayIds = []
           const startIndex = messageIdsArray.indexOf(firstMessageId);
           if (startIndex === -1) {
@@ -70,10 +70,10 @@
             AutoplayIds.push(messageId);
             iterationCount++;
           }
-          autoplayAudios(AutoplayIds);
+          autoplayAudios(AutoplayIds, playOnlyFirst);
       }
 
-      function autoplayAudios(AutoplayIds) {
+      function autoplayAudios(AutoplayIds, playOnlyFirst) {
         let currentIndex = 0;
 
         function waitForAudioElement(currentId, callback) {
@@ -86,8 +86,13 @@
           }, 100); // Check every 100ms
         }
 
-        function playNextAudio() {
-          if (currentIndex >= AutoplayIds.length) {
+        function playNextAudio(playOnlyFirst = null) {
+          playableAudiosCount = messageIdsArray.length;
+          if (playOnlyFirst) {
+            playableAudiosCount = 1
+          }
+
+          if (currentIndex >= playableAudiosCount) {
             return; // All audios played
           }
 
@@ -101,7 +106,9 @@
             audioElement.addEventListener('ended', function onAudioEnd() {
               audioElement.removeEventListener('ended', onAudioEnd); // Clean up the event listener
               currentIndex++;
-              playNextAudio(); // Play the next audio
+              if (!playOnlyFirst) {
+                playNextAudio(); // Play the next audio
+              }
             });
 
             // Check if audio is already ready to play
@@ -111,7 +118,7 @@
           });
         }
 
-        playNextAudio(); // Start playing the first audio
+        playNextAudio(playOnlyFirst); // Start playing the first audio
       }
 
 
@@ -137,7 +144,7 @@
                 button.addEventListener('click', function () {
                     let form = this.parentElement;
                     let messageId = form.querySelector('input[name="message_id"]').value;
-                    createAudio(messageId, autoplay = true);
+                    createAllAudios(messageId, playOnlyCurrent = true);
                 });
             });
 
