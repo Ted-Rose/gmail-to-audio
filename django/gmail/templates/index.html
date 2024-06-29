@@ -36,18 +36,24 @@
         let currentIndex = 0;
         const data = document.currentScript.dataset;
         const messageIdsArrayString = data.messages;
-        // Convert string to array
-        let messageIdsArray = messageIdsArrayString.replace(/^\[|\]$/g, "").split(", ");
 
-        console.log("messageIdsArrayArray: ", messageIdsArray);
+        // Convert string to array
+        let messageIdsArray = messageIdsArrayString
+          .replace(/^\[|\]$/g, "")
+          .split(/,\s*/)
+          .map(id => id.replace(/^'|'$/g, ""));
+
         console.log("typeof messageIdsArrayArray", typeof messageIdsArray)
-        let messagesArray = []
+        let AutoplayIds = []
 
         function createAllAudios(firstMessageId) {
+          AutoplayIds = []
           // Create an audio player for all messages starting from firstMessageId
+          // console.log("messageIdsArray: ", messageIdsArray);
+          // console.log("firstMessageId: ", firstMessageId);
           const startIndex = messageIdsArray.indexOf(firstMessageId);
-          console.log("startIndex: ", startIndex);
-          console.log("firstMessageId: ", firstMessageId);
+          // console.log("startIndex: ", startIndex);
+          // console.log("firstMessageId: ", firstMessageId);
           if (startIndex === -1) {
               console.error("Invalid messageId");
               return;
@@ -58,20 +64,61 @@
               endIndex = messageIdsArray.length - 1;
           }
 
-          for (let i = startIndex; i !== endIndex; i = (i + 1) % messageIdsArray.length) {
-            console.log("messageIdsArray[" + i + "]:", messageIdsArray[i]); // Corrected logging statement
-            messagesArray.push(messageIdsArray[i]);
-              if (i === startIndex + 2) {
-                break;
-              }
+          let iterationCount = 0;
+          for (let i = startIndex; iterationCount < messageIdsArray.length; i = (i + 1) % messageIdsArray.length) {
+            messageId = messageIdsArray[i]
+            // console.log("messageIdsArray[" + i + "]:", messageIdsArray[i]); // Corrected logging statement
+            const messageAudio = document.querySelector(`#message-${messageId}-container audio`);
+            if (!messageAudio) {
+              console.log("messageAudio is null for messageId: ", messageId);
+              createAudio(messageId);
+            }
+            AutoplayIds.push(messageId);
+            iterationCount++;
           }
-          console.log("messagesArray: ", messagesArray);
+          console.log("AutoplayIds: ", AutoplayIds);
+          autoplayAudios(AutoplayIds);
+      }
+
+        function autoplayAudios(AutoplayIds) {
+          let currentIndex = 0;
+
+          function playNextAudio() {
+            if (currentIndex >= AutoplayIds.length) {
+              return; // All audios played
+            }
+
+            const currentId = AutoplayIds[currentIndex];
+            const audioElement = document.querySelector(`#message-${currentId}-container audio`);
+
+            if (audioElement) {
+              audioElement.addEventListener('canplaythrough', function onCanPlayThrough() {
+                audioElement.removeEventListener('canplaythrough', onCanPlayThrough); // Clean up the event listener
+                audioElement.play();
+              });
+
+              audioElement.addEventListener('ended', function onAudioEnd() {
+                audioElement.removeEventListener('ended', onAudioEnd); // Clean up the event listener
+                currentIndex++;
+                playNextAudio(); // Play the next audio
+              });
+
+              // Check if audio is already ready to play
+              if (audioElement.readyState >= 4) {
+                audioElement.play();
+              }
+            } else {
+              console.error(`Audio element not found for message ID: ${currentId}`);
+              currentIndex++;
+              playNextAudio(); // Skip to the next audio if the current one is not found
+            }
+          }
+
+        playNextAudio(); // Start playing the first audio
       }
 
 
-        function playAllAudios() {
 
-        }
 
         // Create an audio player for message
         function createAudio(messageId, autoplay = false) {
@@ -81,7 +128,7 @@
                     let audioPlayer = document.createElement('audio');
                     audioPlayer.controls = true;
                     audioPlayer.src = data.audio_url;
-                    console.log("messageId: ", messageId);
+                    // console.log("messageId: ", messageId);
                     document.querySelector(`#message-${messageId}-container`).appendChild(audioPlayer);
                     if (autoplay) {
                         audioPlayer.autoplay = true;
@@ -96,7 +143,7 @@
                 button.addEventListener('click', function () {
                     let form = this.parentElement;
                     let messageId = form.querySelector('input[name="message_id"]').value;
-                    console.log("messageId clicked: ", messageId);
+                    // console.log("messageId clicked: ", messageId);
                     createAudio(messageId, autoplay = true);
                 });
             });
@@ -106,7 +153,7 @@
                 button.addEventListener('click', function () {
                     let form = this.parentElement;
                     let messageId = form.querySelector('input[name="message_id"]').value;
-                    console.log("messageId in click: ", messageId);
+                    // console.log("messageId in click: ", messageId);
                     // Create all audios starting from current message
                     createAllAudios(messageId);
                 });

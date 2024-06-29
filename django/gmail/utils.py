@@ -81,7 +81,7 @@ def get_message_ids():
     try:
         # Call the Gmail API
         service = build_google_service()
-        results = service.users().messages().list(userId="me", q="is:unread", maxResults=100).execute()
+        results = service.users().messages().list(userId="me", q="test email after:2024/6/28 before:2024/7/1 is:unread", maxResults=100).execute()
         # print("results:\n", results)
         messages = results.get("messages", [])
         message_ids = [message['id'] for message in messages]
