@@ -2,4 +2,5 @@ __pycache__
 django/db.sqlite3
 django/media/recordings/*
 django/env
-django/google/*
+django/google/app_secrets.json
+django/google/token.json
