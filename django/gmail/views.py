@@ -11,7 +11,6 @@ def index(request):
         context = {'messages': messages}
         return render(request, 'index.html', context)
 
-    # Default behavior: read emails from labels and convert to audio
     return render(request, 'index.html')
 
 

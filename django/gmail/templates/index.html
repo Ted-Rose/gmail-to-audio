@@ -23,7 +23,7 @@
 
         {% for message in messages %}
         <div id="message-{{ message.id }}-container">
-            <p>Message: {{ message.id }}</p>
+            <p>Message id: {{ message.id }}</p>
             <p>Subject: {{ message.subject }}</p>
             <p>Sender: {{ message.sender }}</p>
             <p>Body: {{ message.body }}</p>
@@ -84,7 +84,7 @@
           autoplayAudios(AutoplayIds, playOnlyFirst);
       }
 
-      
+
       function autoplayAudios(AutoplayIds, playOnlyFirst) {
         let currentIndex = 0;
 

@@ -3,6 +3,7 @@ from email import policy
 from email.parser import BytesParser
 from gtts import gTTS
 from django.conf import settings
+from django.http import HttpResponseRedirect
 import os
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -55,10 +56,11 @@ def build_google_service():
                 creds = None  # Set creds to None to ensure we run the OAuth flow
         if not creds or not creds.valid:
             flow = InstalledAppFlow.from_client_secrets_file(
-                client_secrets_path, scopes
+                client_secrets_path, scopes, redirect_uri = "https://tedisrozenfelds.pythonanywhere.com"
             )
-            creds = flow.run_local_server(port=0)
-
+            authorization_url = str(flow.authorization_url())
+            if authorization_url:
+                return authorization_url
         with open(token_path, "w") as token:
             token.write(creds.to_json())
     try:
