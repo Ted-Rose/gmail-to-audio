@@ -37,11 +37,11 @@ def text_to_audio(text: str, lang: str = 'en', filename: str = None) -> str:
     return audio_url
 
 
-def build_google_service():
+def google_auth():
     scopes = ["https://www.googleapis.com/auth/gmail.readonly"]
     creds = None
-    token_path = os.path.join(settings.BASE_DIR, 'google/token.json')
-    client_secrets_path = os.path.join(settings.BASE_DIR, 'google/app_secrets.json')
+    token_path = os.path.join(settings.BASE_DIR, 'gmail/google/token.json')
+    client_secrets_path = os.path.join(settings.BASE_DIR, 'gmail/google/app_secrets.json')
 
     if os.path.exists(token_path):
         creds = Credentials.from_authorized_user_file(token_path, scopes)
@@ -56,11 +56,14 @@ def build_google_service():
                 creds = None  # Set creds to None to ensure we run the OAuth flow
         if not creds or not creds.valid:
             flow = InstalledAppFlow.from_client_secrets_file(
-                client_secrets_path, scopes, redirect_uri = "https://tedisrozenfelds.pythonanywhere.com"
+                client_secrets_path, scopes, redirect_uri = "http://127.0.0.1:8000/"
             )
-            authorization_url = str(flow.authorization_url())
+            authorization_url, state  = flow.authorization_url(
+                access_type='offline',
+                include_granted_scopes='true'
+            )
             if authorization_url:
-                return authorization_url
+                return {"authorization_url": authorization_url}
         with open(token_path, "w") as token:
             token.write(creds.to_json())
     try:
@@ -78,7 +81,10 @@ def get_messages(query):
     Returns a list of Gmail messages / emails that match the query.
     """
     try:
-        service = build_google_service()
+        service = google_auth()
+        if 'authorization_url' in service:
+          return service
+
         results = service.users().messages().list(userId="me", q=query, maxResults=100).execute()
         messages = results.get("messages", [])
         

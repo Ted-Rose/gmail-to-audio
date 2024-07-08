@@ -3,5 +3,5 @@ django/db.sqlite3
 django/media/recordings/*
 !django/media/recordings/.gitkeep
 django/env
-django/google/*
-!django/google/.gitkeep
+django/gmail/google/*
+!django/gmail/google/.gitkeep
