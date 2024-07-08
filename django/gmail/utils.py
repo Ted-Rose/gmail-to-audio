@@ -56,14 +56,14 @@ def google_auth():
                 creds = None  # Set creds to None to ensure we run the OAuth flow
         if not creds or not creds.valid:
             flow = InstalledAppFlow.from_client_secrets_file(
-                client_secrets_path, scopes, redirect_uri = "http://127.0.0.1:8000/"
+                client_secrets_path, scopes, redirect_uri = "https://127.0.0.1:8000/callback"
             )
             authorization_url, state  = flow.authorization_url(
                 access_type='offline',
                 include_granted_scopes='true'
             )
             if authorization_url:
-                return {"authorization_url": authorization_url}
+                return {"authorization_url": authorization_url, "state": state}
         with open(token_path, "w") as token:
             token.write(creds.to_json())
     try:
@@ -131,3 +131,30 @@ def get_messages(query):
         print(f"An error occurred: {error}")
     
     return message_details
+
+def callback(request):
+    state = request.session['state']
+    scopes = ["https://www.googleapis.com/auth/gmail.readonly"]
+    token_path = os.path.join(settings.BASE_DIR, 'gmail/google/token.json')
+    client_secrets_path = os.path.join(settings.BASE_DIR, 'gmail/google/app_secrets.json')
+
+    flow = InstalledAppFlow.from_client_secrets_file(
+                client_secrets_path,
+                scopes,
+                redirect_uri = "https://127.0.0.1:8000/callback"
+            )
+    flow.fetch_token(authorization_response=request.build_absolute_uri())
+    credentials = flow.credentials
+    user = request.user
+
+    # Save credentials to the database
+    google_creds, created = GoogleOAuth2Credentials.objects.get_or_create(user=user)
+    google_creds.access_token = credentials.token
+    google_creds.refresh_token = credentials.refresh_token
+    google_creds.token_uri = credentials.token_uri
+    google_creds.client_id = credentials.client_id
+    google_creds.client_secret = credentials.client_secret
+    google_creds.scopes = ','.join(credentials.scopes)
+    google_creds.save()
+
+    return redirect('some_view_name') 

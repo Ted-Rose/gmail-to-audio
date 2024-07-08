@@ -8,7 +8,8 @@ def index(request):
     if 'get_messages' in request.GET:
         query = request.GET.get('query', '')
         messages = get_messages(query=query)
-        if 'authorization_url' in messages:
+        if 'authorization_url' and 'state' in messages:
+            request.session['state'] = messages['state']
             return redirect(messages['authorization_url'])
         context = {'messages': messages}
         return render(request, 'index.html', context)

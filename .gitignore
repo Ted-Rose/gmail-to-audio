@@ -5,3 +5,5 @@ django/media/recordings/*
 django/env
 django/gmail/google/*
 !django/gmail/google/.gitkeep
+django/localhost.crt
+django/localhost.key

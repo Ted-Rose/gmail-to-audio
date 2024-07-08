@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'gmail',
+    # Redundant on pythonanywhere
+    'django_sslserver2',
 ]
 
 MIDDLEWARE = [
@@ -130,3 +132,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+################################################################################
+################################################################################
+################################################################################
+# Redundant on pythonanywhere below thi line
+################################################################################
+################################################################################
+################################################################################
+# Use HTTPS
+SECURE_SSL_REDIRECT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# SSL certificate paths
+SSL_CERTIFICATE = 'django/localhost.crt'
+SSL_KEY = 'django/localhost.key'
