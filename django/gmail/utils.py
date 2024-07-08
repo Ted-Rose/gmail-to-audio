@@ -4,6 +4,7 @@ from email.parser import BytesParser
 from gtts import gTTS
 from django.conf import settings
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 import os
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -13,6 +14,8 @@ from googleapiclient.errors import HttpError
 import re
 from datetime import datetime
 
+from gmail import views
+from .models import GoogleOAuth2Credentials
 
 def text_to_audio(text: str, lang: str = 'en', filename: str = None) -> str:
     lang = 'en' if lang is None else lang
@@ -147,14 +150,21 @@ def callback(request):
     credentials = flow.credentials
     user = request.user
 
-    # Save credentials to the database
-    google_creds, created = GoogleOAuth2Credentials.objects.get_or_create(user=user)
+    # TODO How to know who is the current user? Do we have to authenticate before we authorize?
+
+    # print("credentials", credentials)
+    # print("credentialstoken", credentials.token)
+    # print("credentialsscopes", credentials.scopes)
+    # print("credentialsclient_secret", credentials.client_secret)
+    print("credentials._account:", credentials._account)
+    print("credentials._account:", credentials.account)
+    # for object in credentials.__dict__:
+    #     print("object: ", object)
+    # # Save credentials to the database
+    google_creds, _ = GoogleOAuth2Credentials.objects.get_or_create(user=user)
     google_creds.access_token = credentials.token
     google_creds.refresh_token = credentials.refresh_token
-    google_creds.token_uri = credentials.token_uri
-    google_creds.client_id = credentials.client_id
-    google_creds.client_secret = credentials.client_secret
     google_creds.scopes = ','.join(credentials.scopes)
     google_creds.save()
 
-    return redirect('some_view_name') 
+    return redirect(views.index) 
