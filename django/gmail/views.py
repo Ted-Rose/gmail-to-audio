@@ -12,17 +12,17 @@ def index(request):
             query = request.GET.get('query', '')
             messages = get_messages(query=query, creds=creds)
 
+            # If user has to authorize authorization_url is returned
             if 'authorization_url' in messages and 'state' in messages:
                 request.session['state'] = messages['state']
                 return redirect(messages['authorization_url'])
             
             context = {'messages': messages}
-            print("Got these messages: ", messages)
             return render(request, 'index.html', context)
         else:
             auth = google_auth()
             request.session['state'] = auth['state']
-            return redirect(auth['authorization_url'])  # Redirect to authentication if no token
+            return redirect(auth['authorization_url'])
 
     return render(request, 'index.html')
 

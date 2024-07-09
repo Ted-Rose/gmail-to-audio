@@ -4,7 +4,6 @@ import json
 from email.parser import BytesParser
 from gtts import gTTS
 from django.conf import settings
-from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 import os
 from google.auth.transport.requests import Request
@@ -14,9 +13,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import re
 from datetime import datetime
-
 from gmail import views
-from .models import GoogleOAuth2Credentials
 
 def text_to_audio(text: str, lang: str = 'en', filename: str = None) -> str:
     lang = 'en' if lang is None else lang
@@ -26,11 +23,8 @@ def text_to_audio(text: str, lang: str = 'en', filename: str = None) -> str:
     # Remove long dashes
     text = re.sub(r'-{2,}', '', text)
 
-    # print("lang: ", lang)
-    # print("slow: ", False)
     audio = gTTS(text=text, lang=lang, slow=False)
     filename = 'message_audio.mp3' if filename is None else str(filename) + '.mp3'
-    # print("filename: ", filename)
     audio_file_path = os.path.join(
         settings.MEDIA_ROOT,
         "recordings",
@@ -43,29 +37,25 @@ def text_to_audio(text: str, lang: str = 'en', filename: str = None) -> str:
 
 def google_auth(creds=None):
     scopes = ["https://www.googleapis.com/auth/gmail.readonly"]
-    token_path = os.path.join(settings.BASE_DIR, 'gmail/google/token.json')
     client_secrets_path = os.path.join(settings.BASE_DIR, 'gmail/google/app_secrets.json')
-    json_path = os.path.join(settings.BASE_DIR, 'gmail/google/app_secrets.json')
-    with open(json_path, 'r') as file:
+    with open(client_secrets_path, 'r') as file:
         data = json.load(file)
     
     client_id = data.get('installed', {}).get('client_id')
     client_secret = data.get('installed', {}).get('client_secret')
     token_uri = data.get('installed', {}).get('token_uri')
     
-    # if os.path.exists(token_path):
-        # creds = Credentials.from_authorized_user_file(token_path, scopes)
     if creds:
       creds = Credentials(
           token=creds['token'],
           refresh_token=creds['refresh_token'],
           client_secret=client_secret,
           client_id=client_id,
+          token_uri=token_uri,
           scopes=scopes,
           expiry=datetime.fromisoformat(creds['expiry'])
       )
-    print("creds: ", creds)
-    # If there are no (valid) credentials available, let the user log in.
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             can_refresh = creds.expiry < datetime.today()
@@ -81,10 +71,8 @@ def google_auth(creds=None):
                 access_type='offline',
                 include_granted_scopes='true'
             )
-            if authorization_url:
-                return {"authorization_url": authorization_url, "state": state}
-        # with open(token_path, "w") as token:
-        #     token.write(creds.to_json())
+            return {"authorization_url": authorization_url, "state": state}
+  
     try:
         # Call the Gmail API
         service = build("gmail", "v1", credentials=creds)
@@ -101,7 +89,8 @@ def get_messages(query, creds):
     """
     try:
         service = google_auth(creds)
-        if isinstance(service, dict) and 'authorization_url' in service and 'state' in service:
+        # google_auth returns authorization_url if user has to authorize
+        if isinstance(service, dict) and 'authorization_url' in service:
           return service
 
         results = service.users().messages().list(userId="me", q=query, maxResults=100).execute()
@@ -151,10 +140,9 @@ def get_messages(query, creds):
     
     return message_details
 
+
 def callback(request):
-    state = request.session['state']
     scopes = ["https://www.googleapis.com/auth/gmail.readonly"]
-    token_path = os.path.join(settings.BASE_DIR, 'gmail/google/token.json')
     client_secrets_path = os.path.join(settings.BASE_DIR, 'gmail/google/app_secrets.json')
 
     flow = InstalledAppFlow.from_client_secrets_file(
@@ -164,31 +152,10 @@ def callback(request):
             )
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     credentials = flow.credentials
-    print("flow.credentials", flow.credentials)
     request.session['google_credentials'] = {
         'token': credentials.token,
         'refresh_token': credentials.refresh_token,
         'expiry': credentials.expiry.isoformat()
     }
-    user = request.user
-    # print("user", user)
-    # print("request.session['google_token']", request.session['google_token'])
 
-    # TODO How to know who is the current user? Do we have to authenticate before we authorize?
-
-    # print("credentials", credentials)
-    # print("credentialstoken", credentials.token)
-    # print("credentialsscopes", credentials.scopes)
-    # print("credentialsclient_secret", credentials.client_secret)
-    print("credentials._account:", credentials._account)
-    print("credentials._account:", credentials.account)
-    # for object in credentials.__dict__:
-    #     print("object: ", object)
-    # # Save credentials to the database
-    # google_creds, _ = GoogleOAuth2Credentials.objects.get_or_create(user=user)
-    # google_creds.access_token = credentials.token
-    # google_creds.refresh_token = credentials.refresh_token
-    # google_creds.scopes = ','.join(credentials.scopes)
-    # google_creds.save()
-
-    return redirect(views.index) 
+    return redirect(views.index)
