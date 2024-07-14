@@ -65,7 +65,7 @@ def google_auth(creds=None):
                 creds = None  # Set creds to None to ensure we run the OAuth flow
         if not creds or not creds.valid:
             flow = InstalledAppFlow.from_client_secrets_file(
-                client_secrets_path, scopes, redirect_uri = "https://127.0.0.1:8000/callback"
+                client_secrets_path, scopes, redirect_uri = "https://tedisrozenfelds.pythonanywhere.com/callback"
             )
             authorization_url, state  = flow.authorization_url(
                 access_type='offline',
