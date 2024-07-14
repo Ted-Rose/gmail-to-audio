@@ -148,7 +148,7 @@ def callback(request):
     flow = InstalledAppFlow.from_client_secrets_file(
                 client_secrets_path,
                 scopes,
-                redirect_uri = "https://127.0.0.1:8000/callback"
+                redirect_uri = "https://tedisrozenfelds.pythonanywhere.com/callback"
             )
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     credentials = flow.credentials
