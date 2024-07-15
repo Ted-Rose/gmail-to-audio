@@ -36,7 +36,6 @@ def text_to_audio(text: str, lang: str = 'en', filename: str = None) -> str:
 
 
 def extract_text_from_html(html_content):
-    
     # Remove HTML comments
     html_content = re.sub(r'<!--(.*?)-->', '', html_content, flags=re.DOTALL)
     
@@ -67,14 +66,19 @@ def google_auth(creds=None):
           client_id=client_id,
           token_uri=token_uri,
           scopes=scopes,
-          expiry=datetime.fromisoformat(creds['expiry'])
+          expiry=datetime.fromisoformat(creds['expiry']),
       )
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             can_refresh = creds.expiry < datetime.today()
             if can_refresh:
-                creds.refresh(Request())
+                creds.refresh(Request(
+                    refresh_token=creds.refresh_token,
+                    token_uri=token_uri,
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    ))
             else:
                 creds = None  # Set creds to None to ensure we run the OAuth flow
         if not creds or not creds.valid:
