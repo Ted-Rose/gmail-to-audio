@@ -57,9 +57,9 @@ def google_auth(creds=None):
     with open(client_secrets_path, 'r') as file:
         data = json.load(file)
     
-    client_id = data.get('installed', {}).get('client_id')
-    client_secret = data.get('installed', {}).get('client_secret')
-    token_uri = data.get('installed', {}).get('token_uri')
+    client_id = data.get('web', {}).get('client_id')
+    client_secret = data.get('web', {}).get('client_secret')
+    token_uri = data.get('web', {}).get('token_uri')
     
     if creds:
       logger.info("in creds")
