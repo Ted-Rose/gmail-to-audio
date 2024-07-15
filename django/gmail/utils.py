@@ -73,12 +73,12 @@ def google_auth(creds=None):
         if creds and creds.expired and creds.refresh_token:
             can_refresh = creds.expiry < datetime.today()
             if can_refresh:
-                creds.refresh(Request(
+                creds.refresh(
                     refresh_token=creds.refresh_token,
                     token_uri=token_uri,
                     client_id=client_id,
                     client_secret=client_secret,
-                    ))
+                    )
             else:
                 creds = None  # Set creds to None to ensure we run the OAuth flow
         if not creds or not creds.valid:
