@@ -59,6 +59,11 @@ def google_auth(creds=None):
     token_uri = data.get('installed', {}).get('token_uri')
     
     if creds:
+      print("in creds")
+      print("refresh_token:", creds['refresh_token'])
+      print("client_secret:", client_secret)
+      print("client_id:", client_id)
+      print("token_uri:", token_uri)
       creds = Credentials(
           token=creds['token'],
           refresh_token=creds['refresh_token'],
