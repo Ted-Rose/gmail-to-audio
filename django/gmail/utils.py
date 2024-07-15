@@ -5,6 +5,7 @@ from email.parser import BytesParser
 from gtts import gTTS
 from django.conf import settings
 from django.shortcuts import redirect
+import logging
 import os
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -14,6 +15,8 @@ from googleapiclient.errors import HttpError
 import re
 from datetime import datetime
 from gmail import views
+
+logger = logging.getLogger('django')
 
 def text_to_audio(text: str, lang: str = 'en', filename: str = None) -> str:
     lang = 'en' if lang is None else lang
@@ -59,11 +62,11 @@ def google_auth(creds=None):
     token_uri = data.get('installed', {}).get('token_uri')
     
     if creds:
-      print("in creds")
-      print("refresh_token:", creds['refresh_token'])
-      print("client_secret:", client_secret)
-      print("client_id:", client_id)
-      print("token_uri:", token_uri)
+      logger.info("in creds")
+      logger.info("refresh_token: %s", creds['refresh_token'])
+      logger.info("client_secret: %s", client_secret)
+      logger.info("client_id: %s", client_id)
+      logger.info("token_uri: %s", token_uri)
       creds = Credentials(
           token=creds['token'],
           refresh_token=creds['refresh_token'],

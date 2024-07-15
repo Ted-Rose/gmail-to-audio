@@ -1,5 +1,6 @@
 __pycache__
 django/db.sqlite3
+django/django.log
 django/media/recordings/*
 !django/media/recordings/.gitkeep
 django/env
