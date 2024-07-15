@@ -24,12 +24,12 @@
         {% for message in messages %}
         <div id="message-{{ message.id }}-container">
             <p>Message id: {{ message.id }}</p>
-            <p>Subject: {{ message.subject }}</p>
-            <p>Sender: {{ message.sender }}</p>
-            <p>Body: {{ message.body }}</p>
+            <p class="subject">Subject: {{ message.subject }}</p>
+            <p class="sender">Sender: {{ message.sender }}</p>
+            <p class="body">Body: {{ message.body }}</p>
             <div id="audio-player-{{ message.id }}"></div>
             <form method="get" action="" class="create-audio-form">
-                <input type="hidden" name="message_id" value="{{ message.id }}">
+                <input type="hidden" name="message-id" value="{{ message.id }}">
                 <button type="button" class="play-audio">Play</button>
                 <button type="button" class="play-all-audios">Play all from here</button>
             </form>
@@ -37,51 +37,51 @@
         {% endfor %}
     {% endif %}
 
-    <script data-messages="{{ messages | safe }}">
-        let currentIndex = 0;
-        const data = document.currentScript.dataset;
-        const messagesArrayString = data.messages;
+    <script>
+      let messageIds = [];
+
+      document.addEventListener("DOMContentLoaded", () => {
+          const messageIdElements = document.querySelectorAll('input[name="message-id"]');
+          messageIds = Array.from(messageIdElements).map(input => input.value);
+      });
+
+      let currentIndex = 0;      
+      let AutoplayIds = []
+
+      function createAllAudios(firstMessageId, playOnlyFirst = false) {
+        AutoplayIds = [];
+        const startIndex = messageIds.findIndex(id => id === firstMessageId);
+        if (startIndex === -1) {
+            console.error("Invalid messageId");
+            return;
+        }
+
+        let endIndex = startIndex - 1;
+        if (endIndex < 0) {
+            endIndex = messageIds.length - 1;
+        }
+
+        let iterationCount = 0;
         
-        // Convert string to array
-        let messagesArray = JSON.parse(messagesArrayString.replace(/'/g, '"'));
-        
-        let AutoplayIds = []
+        for (
+          let i = startIndex;
+          iterationCount < messageIds.length;
+          i = (i + 1) % messageIds.length) {
+            messageId = messageIds[i]
+            const container = document.querySelector(`#message-${messageId}-container`);
+            const messageAudio = container.querySelector(`audio`);
+            const subject = container.querySelector('.subject').textContent;
+            const sender = container.querySelector('.sender').textContent;
+            const body = container.querySelector('.body').textContent;
 
-
-        function createAllAudios(firstMessageId, playOnlyFirst = false) {
-          AutoplayIds = [];
-          const startIndex = messagesArray.findIndex(message => message.id === firstMessageId);
-
-          if (startIndex === -1) {
-              console.error("Invalid messageId");
-              return;
-          }
-
-          let endIndex = startIndex - 1;
-          if (endIndex < 0) {
-              endIndex = messagesArray.length - 1;
-          }
-
-          let iterationCount = 0;
-          for (
-            let i = startIndex;
-            iterationCount < messagesArray.length;
-            i = (i + 1) % messagesArray.length) {
-              messageId = messagesArray[i]['id']
-              const messageAudio = document.querySelector(`#message-${messageId}-container audio`);
-              if (!messageAudio) {
-                console.log("Creating audio for messageId: ", messageId);
-                messageString = 
-                  "Subject: "
-                  + messagesArray[i]['subject']
-                  + "\n" + "Body: "
-                  + messagesArray[i]['body'];
-                createAudio(messageString, messageId);
-              }
-              AutoplayIds.push(messagesArray[i]['id']);
-              iterationCount++;
-          }
-          autoplayAudios(AutoplayIds, playOnlyFirst);
+            if (!messageAudio) {
+              messageString = subject + "\n" + sender + "\n" + body;
+              createAudio(messageString, messageId);
+            }
+            AutoplayIds.push(messageIds[i]);
+            iterationCount++;
+        }
+        autoplayAudios(AutoplayIds, playOnlyFirst);
       }
 
 
@@ -98,8 +98,9 @@
           }, 100); // Check every 100ms
         }
 
+
         function playNextAudio(playOnlyFirst = null) {
-          playableAudiosCount = messagesArray.length;
+          playableAudiosCount = messageIds.length;
           if (playOnlyFirst) {
             playableAudiosCount = 1
           }
@@ -107,7 +108,6 @@
           if (currentIndex >= playableAudiosCount) {
             return; // All audios played
           }
-
           const currentId = AutoplayIds[currentIndex];
           waitForAudioElement(currentId, (audioElement) => {
             audioElement.addEventListener('loadeddata', function onLoadedData() {
@@ -130,13 +130,13 @@
           });
         }
 
-        playNextAudio(playOnlyFirst); // Start playing the first audio
+        playNextAudio(playOnlyFirst);
       }
 
 
       // Create an audio player for message
       function createAudio(text, messageId, autoplay = false) {
-          fetch(`/audio?text=${text}&filename=${messageId}`)
+          fetch(`/audio?text=${encodeURIComponent(text)}&filename=${messageId}`)
               .then(response => response.json())
               .then(data => {
                   let audioPlayer = document.createElement('audio');
@@ -151,25 +151,26 @@
 
           };
 
+
       const playAudioButtons = document.querySelectorAll('.play-audio');
       playAudioButtons.forEach(button => {
           button.addEventListener('click', function () {
               let form = this.parentElement;
-              let messageId = form.querySelector('input[name="message_id"]').value;
+              let messageId = form.querySelector('input[name="message-id"]').value;
               createAllAudios(messageId, playOnlyCurrent = true);
           });
       });
+
 
       const createAllAudioButtons = document.querySelectorAll('.play-all-audios');
       createAllAudioButtons.forEach(button => {
           button.addEventListener('click', function () {
               let form = this.parentElement;
-              let messageId = form.querySelector('input[name="message_id"]').value;
-              // Create all audios starting from current message
+              let messageId = form.querySelector('input[name="message-id"]').value;
               createAllAudios(messageId);
           });
       });
+
     </script>
 </body>
-
 </html>

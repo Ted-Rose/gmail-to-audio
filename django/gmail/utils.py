@@ -35,6 +35,20 @@ def text_to_audio(text: str, lang: str = 'en', filename: str = None) -> str:
     return audio_url
 
 
+def extract_text_from_html(html_content):
+    
+    # Remove HTML comments
+    html_content = re.sub(r'<!--(.*?)-->', '', html_content, flags=re.DOTALL)
+    
+    # Remove all HTML tags
+    clean_text = re.sub(r'<.*?>', '', html_content, flags=re.DOTALL)
+    
+    # Normalize spaces and remove extra newlines
+    clean_text = re.sub(r'\s+', ' ', clean_text)
+    
+    return clean_text.strip()
+
+
 def google_auth(creds=None):
     scopes = ["https://www.googleapis.com/auth/gmail.readonly"]
     client_secrets_path = os.path.join(settings.BASE_DIR, 'gmail/google/app_secrets.json')
@@ -126,6 +140,8 @@ def get_messages(query, creds):
             else:
                 body = mime_message.get_payload(decode=True).decode(charset, errors='replace')
 
+            # Try to remove any html elements if present
+            body = extract_text_from_html(body)
             # Add message details to the list
             message_details.append({
                 'id': message_id,

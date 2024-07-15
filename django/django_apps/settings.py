@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'gmail',
     # Redundant on pythonanywhere
-    # 'sslserver',
+    'sslserver',
 ]
 
 MIDDLEWARE = [
