@@ -15,10 +15,15 @@ from googleapiclient.errors import HttpError
 import re
 from datetime import datetime
 from gmail import views
+from langdetect import detect
 
 logger = logging.getLogger('django')
 
 def text_to_audio(text: str, lang: str = 'en', filename: str = None) -> str:
+
+    # Detect the language
+    language = detect(text)
+    print(f"The detected language is: {language} for this text:\n", text)
     lang = 'en' if lang is None else lang
 
     # Replace URLs with the word "url"
@@ -62,11 +67,6 @@ def google_auth(creds=None):
     token_uri = data.get('web', {}).get('token_uri')
     
     if creds:
-      logger.info("in creds")
-      logger.info("refresh_token: %s", creds['refresh_token'])
-      logger.info("client_secret: %s", client_secret)
-      logger.info("client_id: %s", client_id)
-      logger.info("token_uri: %s", token_uri)
       creds = Credentials(
           token=creds['token'],
           refresh_token=creds['refresh_token'],
@@ -79,14 +79,14 @@ def google_auth(creds=None):
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            can_refresh = creds.expiry < datetime.today()
+            can_refresh = creds.expiry > datetime.today()
             if can_refresh:
                 creds.refresh(Request())
             else:
                 creds = None  # Set creds to None to ensure we run the OAuth flow
         if not creds or not creds.valid:
             flow = InstalledAppFlow.from_client_secrets_file(
-                client_secrets_path, scopes, redirect_uri = "https://tedisrozenfelds.pythonanywhere.com/callback"
+                client_secrets_path, scopes, redirect_uri = "https://127.0.0.1:8000/callback"
             )
             authorization_url, state  = flow.authorization_url(
                 access_type='offline',
@@ -171,7 +171,7 @@ def callback(request):
     flow = InstalledAppFlow.from_client_secrets_file(
                 client_secrets_path,
                 scopes,
-                redirect_uri = "https://tedisrozenfelds.pythonanywhere.com/callback"
+                redirect_uri = "https://127.0.0.1:8000/callback"
             )
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     credentials = flow.credentials
