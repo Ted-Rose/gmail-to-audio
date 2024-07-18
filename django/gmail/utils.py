@@ -15,17 +15,18 @@ from googleapiclient.errors import HttpError
 import re
 from datetime import datetime
 from gmail import views
-from langdetect import detect
+from langdetect import detect, DetectorFactory, detect_langs
 
 logger = logging.getLogger('django')
 
-def text_to_audio(text: str, lang: str = 'en', filename: str = None) -> str:
-
-    # Detect the language
-    language = detect(text)
-    print(f"The detected language is: {language} for this text:\n", text)
-    lang = 'en' if lang is None else lang
-
+def text_to_audio(text: str, lang: str = None, filename: str = None) -> str:
+    DetectorFactory.seed = 0
+    if lang is None:
+        lang = detect(text)
+        print("\n\n\nset lang to: ", lang)
+        # Sometimes by mistake english is mistaken as german or danish
+        if lang in ['da', 'de']:
+            lang = 'en'
     # Replace URLs with the word "url"
     text = re.sub(r'https?://\S+', 'web link', text)
     # Remove long dashes
