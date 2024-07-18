@@ -136,7 +136,7 @@
 
       // Create an audio player for message
       function createAudio(text, messageId, autoplay = false) {
-          fetch(`/audio?text=${encodeURIComponent(text)}&filename=${messageId}`)
+          fetch(`/google/transcribe?text=${encodeURIComponent(text)}&filename=${messageId}`)
               .then(response => response.json())
               .then(data => {
                   let audioPlayer = document.createElement('audio');

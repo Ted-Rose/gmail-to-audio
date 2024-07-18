@@ -4,5 +4,4 @@ django/django.log
 django/media/recordings/*
 !django/media/recordings/.gitkeep
 django/env
-django/gmail/google/*
-!django/gmail/google/.gitkeep
+django/google_api/app_secrets.json

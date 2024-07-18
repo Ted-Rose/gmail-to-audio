@@ -14,7 +14,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import re
 from datetime import datetime
-from gmail import views
+from google_api import views
 from langdetect import detect, DetectorFactory, detect_langs
 
 logger = logging.getLogger('django')
@@ -59,7 +59,7 @@ def extract_text_from_html(html_content):
 
 def google_auth(creds=None):
     scopes = ["https://www.googleapis.com/auth/gmail.readonly"]
-    client_secrets_path = os.path.join(settings.BASE_DIR, 'gmail/google/app_secrets.json')
+    client_secrets_path = os.path.join(settings.BASE_DIR, 'google_api/app_secrets.json')
     with open(client_secrets_path, 'r') as file:
         data = json.load(file)
     
@@ -172,7 +172,7 @@ def callback(request):
     flow = InstalledAppFlow.from_client_secrets_file(
                 client_secrets_path,
                 scopes,
-                redirect_uri = "https://127.0.0.1:8000/callback"
+                redirect_uri = "https://127.0.0.1:8000/google/callback"
             )
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     credentials = flow.credentials

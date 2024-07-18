@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from gmail.utils import get_messages, text_to_audio, google_auth
+from google_api.utils import get_messages, text_to_audio, google_auth
 from django.conf import settings
 from django.http import JsonResponse
 
