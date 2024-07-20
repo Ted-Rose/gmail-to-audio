@@ -1,6 +1,7 @@
 # Development logs
-7. # TODO - ENDPOINT /audio SHOULD CHECK IF AUDIO EXISTS AND IF NOT CREATE IT
-  - FIX ACCESSING MEDIA FILES FROM BROWSER
+7. Current deployment SOP:
+  1. `git pull`
+  2. 
 6. Deployment on pythonanywhere:
     - `ssh-keygen -t rsa -b 4096 -C "your_email@example.com"`
         - Replace your_email@example.com with the email address associated with your GitHub account.

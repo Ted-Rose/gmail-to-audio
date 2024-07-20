@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect
 from google_api.utils import get_messages, text_to_audio, google_auth
-from django.conf import settings
 from django.http import JsonResponse
 
 
+def home(request):
+    return render(request, 'home.html')
 
-def index(request):
+
+def gmail(request):
     if 'get_messages' in request.GET:
         creds = request.session.get('google_credentials')
         if creds:
@@ -18,13 +20,13 @@ def index(request):
                 return redirect(messages['authorization_url'])
             
             context = {'messages': messages}
-            return render(request, 'index.html', context)
+            return render(request, 'gmail.html', context)
         else:
             auth = google_auth()
             request.session['state'] = auth['state']
             return redirect(auth['authorization_url'])
 
-    return render(request, 'index.html')
+    return render(request, 'gmail.html')
 
 
 
