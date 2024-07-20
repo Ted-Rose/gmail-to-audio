@@ -172,7 +172,7 @@ def callback(request):
     flow = InstalledAppFlow.from_client_secrets_file(
                 client_secrets_path,
                 scopes,
-                redirect_uri = "https://https://tedisrozenfelds.pythonanywhere.com/google/callback"
+                redirect_uri = "https://tedisrozenfelds.pythonanywhere.com/google/callback"
             )
     flow.fetch_token(authorization_response=request.build_absolute_uri())
     credentials = flow.credentials
