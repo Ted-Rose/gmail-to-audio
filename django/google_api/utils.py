@@ -182,4 +182,4 @@ def callback(request):
         'expiry': credentials.expiry.isoformat()
     }
 
-    return redirect(views.index)
+    return redirect('google_api:gmail')

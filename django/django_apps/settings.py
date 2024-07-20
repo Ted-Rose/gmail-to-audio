@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+import yaml
 from logging.handlers import RotatingFileHandler
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,11 +22,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@&+-#4ghwv9x4d25*)x*rpf(+&%c1!po3bl_3q+q_f(anp-j3a'
+LOCAL_SETTINGS_PATH = os.path.join(os.path.dirname(BASE_DIR), 'settings.yaml')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Load settings from the YAML file if it exists
+if os.path.isfile(LOCAL_SETTINGS_PATH):
+    with open(LOCAL_SETTINGS_PATH, 'r') as file:
+        local_settings = yaml.safe_load(file)
+        SECRET_KEY = local_settings.get('SECRET_KEY', 'default-secret-key')
+        DEBUG = local_settings.get('DEBUG', False)
+else:
+    raise FileNotFoundError(f'{LOCAL_SETTINGS_PATH} does not exist. Please provide a settings.yaml file.')
 
 ALLOWED_HOSTS = [
   'tedisrozenfelds.pythonanywhere.com',
