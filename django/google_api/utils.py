@@ -15,7 +15,7 @@ from googleapiclient.errors import HttpError
 import re
 from datetime import datetime
 from google_api import views
-from langdetect import detect, DetectorFactory, detect_langs
+from langdetect import detect, DetectorFactory
 
 logger = logging.getLogger('django')
 
