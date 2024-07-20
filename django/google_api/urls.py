@@ -3,10 +3,7 @@ from . import views
 from google_api.utils import callback
 
 urlpatterns = [
-    path('gmail', views.index, name='index'),
-    path('transcribe', views.audio, name='audio'),
-    path('callback', callback, name='callback'),
+    path('gmail-to-audio', views.index, name='index'),
+    path('text-to-audio', views.audio, name='audio'),
+    path('google/callback', callback, name='callback'),
 ]
-# TODO
-# Add a prefix to the urlpatterns
-urlpatterns = [path('google/', include(urlpatterns))]

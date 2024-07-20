@@ -8,7 +8,6 @@
 </head>
 
 <body>
-    {% if not messages %}
     <h1>Get emails!</h1>
     <form method="get" action="">
       <label for="query">Filter what emails you would like to fetch:</label>
@@ -136,7 +135,7 @@
 
       // Create an audio player for message
       function createAudio(text, messageId, autoplay = false) {
-          fetch(`/google/transcribe?text=${encodeURIComponent(text)}&filename=${messageId}`)
+          fetch(`/text-to-audio?text=${encodeURIComponent(text)}&filename=${messageId}`)
               .then(response => response.json())
               .then(data => {
                   let audioPlayer = document.createElement('audio');
