@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class GmailConfig(AppConfig):
+class Google_apiConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'gmail'
+    name = 'google_api'
