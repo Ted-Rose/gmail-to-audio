@@ -12,28 +12,22 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-# import json
+import json
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# # Define the path to the local settings JSON file
-# LOCAL_SETTINGS_PATH = os.path.join(BASE_DIR, 'local_settings.json')
+# Define the path to the local settings JSON file
+LOCAL_SETTINGS_PATH = os.path.join(BASE_DIR, 'local_settings.json')
 
-# # Load settings from the JSON file if it exists
-# if os.path.isfile(LOCAL_SETTINGS_PATH):
-#     with open(LOCAL_SETTINGS_PATH, 'r') as file:
-#         local_settings = json.load(file)
-#         SECRET_KEY = local_settings.get('SECRET_KEY', 'default-secret-key')
-#         DEBUG = local_settings.get('debug', False)
-#         BASE_URL = local_settings.get('base_url', 'http://localhost:8000')
-# else:
-#     raise FileNotFoundError(f'{LOCAL_SETTINGS_PATH} does not exist. Please provide a local_settings.json file.')
-
-DEBUG = True
-
-BASE_URL = 'https://127.0.0.1:8000'
-
-SECRET_KEY = 'safe_key'
+# Load settings from the JSON file if it exists
+if os.path.isfile(LOCAL_SETTINGS_PATH):
+    with open(LOCAL_SETTINGS_PATH, 'r') as file:
+        local_settings = json.load(file)
+        SECRET_KEY = local_settings.get('SECRET_KEY')
+        DEBUG = local_settings.get('debug')
+        BASE_URL = local_settings.get('base_url')
+else:
+    raise FileNotFoundError(f'{LOCAL_SETTINGS_PATH} does not exist. Please provide a local_settings.json file.')
 
 ALLOWED_HOSTS = [
   'tedisrozenfelds.pythonanywhere.com',
