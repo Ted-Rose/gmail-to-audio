@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'google_api',
+    'single_pages',
 ]
 
 if DEBUG:

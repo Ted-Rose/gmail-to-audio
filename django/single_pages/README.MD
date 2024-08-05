@@ -1,0 +1,1 @@
+Simple single page apps that don't deserve an django app on their own :(
