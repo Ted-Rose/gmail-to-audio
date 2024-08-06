@@ -7,6 +7,10 @@ def home(request):
     return render(request, 'home.html')
 
 
+def twister(request):
+    return render(request, 'twister.html')
+
+
 def gmail(request):
     if 'get_messages' in request.GET:
         creds = request.session.get('google_credentials')
