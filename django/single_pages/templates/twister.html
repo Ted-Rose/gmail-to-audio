@@ -123,11 +123,11 @@
         console.log(`Audio element with id ${filename} already exists.`);
         return;
       }
-      fetch(`/text-to-audio?text=${encodeURIComponent(text)}&filename=${filename}`)
+      fetch(`/text-to-audio?text=${encodeURIComponent(text)}&filename=${filename}&lang=lv`)
         .then(response => response.json())
         .then(data => {
           const audioPlayer = document.createElement('audio');
-          audioPlayer.controls = true;
+          audioPlayer.controls = false;
           audioPlayer.src = data.audio_url;
           audioPlayer.id = filename;
           const targetDiv = document.getElementById(`${array}-${indexInArray}`);
@@ -161,8 +161,9 @@
       const basePlayer = players[index % players.length];
       const randomSubArray1 = subArrays[0][Math.floor(Math.random() * subArrays[0].length)];
       const randomSubArray2 = subArrays[1][Math.floor(Math.random() * subArrays[1].length)];
+      const randomSubArray3 = subArrays[2][Math.floor(Math.random() * subArrays[2].length)];
 
-      const nextMove = [basePlayer, randomSubArray1, randomSubArray2];
+      const nextMove = [basePlayer, randomSubArray1, randomSubArray2, randomSubArray3];
       playAudios(nextMove).then(() => {
         if (!document.getElementById('Pause').checked) {
           setTimeout(() => playGame(players, subArrays, index + 1), 5000);
@@ -175,20 +176,17 @@
       const players = Array.from(document.querySelectorAll('#base-array-container input')).map(input => input.value);
       const subArray1 = Array.from(document.querySelectorAll('#sub-array-1-container input')).map(input => input.value);
       const subArray2 = Array.from(document.querySelectorAll('#sub-array-2-container input')).map(input => input.value);
-
-      // Create audio elements for the first move
-      // createAudio(players[0], 'base-array', 0);
-      // createAudio(subArray1[0], 'sub-array-1', 0);
-      // createAudio(subArray2[0], 'sub-array-2', 0);
+      const subArray3 = Array.from(document.querySelectorAll('#sub-array-3-container input')).map(input => input.value);
 
       // Store the arrays
-      moveLog = [[players[0], subArray1[0], subArray2[0]]];
-      playGame(players, [subArray1, subArray2], 1);
+      moveLog = [[players[0], subArray1[0], subArray2[0]], subArray3[0]];
+      playGame(players, [subArray1, subArray2, subArray3], 1);
 
       // Create audio elements for all moves
       players.forEach((player, i) => createAudio(player, 'base-array', i));
       subArray1.forEach((move, i) => createAudio(move, 'sub-array-1', i));
       subArray2.forEach((move, i) => createAudio(move, 'sub-array-2', i));
+      subArray3.forEach((move, i) => createAudio(move, 'sub-array-3', i));
     }
 
     // Hash function (placeholder)
