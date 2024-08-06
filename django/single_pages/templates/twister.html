@@ -7,110 +7,126 @@
 </head>
 <body>
   <h1>Spēlējam Twister!</h1>
-  
-  <form id="arrays-form">
-    <div id="base-array-container">
-      <label for="base-array-0">Spelētāji</label>
-      <input type="text" id="base-array-0" name="base-array" value="Kārlis">
-      <button type="button" onclick="addField('base-array-container', 'base-array')">Pievienot lauku</button>
-    </div>
-    
-    <div id="sub-array-1-container">
-      <label for="sub-array-1-0">Dzīvnieku lauki</label>
-      <input type="text" id="sub-array-1-0" name="sub-array-1" value="Lauva">
-      <button type="button" onclick="addField('sub-array-1-container', 'sub-array-1')">Pievienot lauku</button>
-    </div>
-    
-    <div id="sub-array-2-container">
-      <label for="sub-array-2-0">Krāsu lauki</label>
-      <input type="text" id="sub-array-2-0" name="sub-array-2" value="Sarkanais lauciņš">
-      <button type="button" onclick="addField('sub-array-2-container', 'sub-array-2')">Pievienot lauku</button>
-    </div>
-    
-    <button type="button" id="create_game" onclick="createGame()">Spēlēt!</button>
+  <form id="base-array">
+    <label for="base-query">Spelētāji</label>
+    <input type="text" id="base-query" name="query" value="Kārlis">
+    <button type="button" id="add_base_field">Pievienot lauku</button>
   </form>
-  
-  <input type="checkbox" id="Pause" name="Pause" value="Pauze"> Pause
-  
+  <div id="sub-arrays">
+    <form id="sub-array-1">
+      <label for="sub-query-1">Dzīvnieku lauki</label>
+      <input type="text" id="sub-query-1" name="query" value="Lauva">
+      <button type="button" id="add_sub_field_1">Pievienot lauku</button>
+    </form>
+    <form id="sub-array-2">
+      <label for="sub-query-2">Krāsu lauki</label>
+      <input type="text" id="sub-query-2" name="query" value="Sarkanais lauciņš">
+      <button type="button" id="add_sub_field_2">Pievienot lauku</button>
+    </form>
+  </div>
+  <button type="button" id="create_game">Spēlēt!</button>
+  <input type="checkbox" id="Pause" name="Pause" value="Pauze">
   <script>
     let moveLog = [];
 
-    // Function to add a new input field
-    function addField(containerId, arrayName) {
-      const container = document.getElementById(containerId);
-      const inputCount = container.getElementsByTagName('input').length;
-      const newField = document.createElement('input');
-      newField.type = 'text';
-      newField.name = arrayName;
-      newField.id = `${arrayName}-${inputCount}`;
-      container.appendChild(newField);
+    function hashOf(text) {
+      let hash = 0, i, chr;
+      for (i = 0; i < text.length; i++) {
+        chr = text.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0;
+      }
+      return 'hash' + hash;
     }
 
-    // Function to create audio element
-    function createAudio(text, array, indexInArray) {
-      const filename = hashOf(text);
-      fetch(`/text-to-audio?text=${encodeURIComponent(text)}&filename=${filename}`)
-        .then(response => response.json())
-        .then(data => {
-          const audioPlayer = document.createElement('audio');
-          audioPlayer.controls = true;
-          audioPlayer.src = data.audio_url;
-          document.querySelector(`#${array}-${indexInArray}`).appendChild(audioPlayer);
-        })
-        .catch(error => console.error('Error fetching audio:', error));
-    }
+    // Create an audio player for message
+    async function createAudio(text, array, indexInArray) {
+      let filename = hashOf(text);
+      try {
+        let response = await fetch(`/text-to-audio?text=${encodeURIComponent(text)}&filename=${filename}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        let data = await response.json();
+        let audioPlayer = document.createElement('audio');
+        audioPlayer.controls = true;
+        audioPlayer.src = data.audio_url;
 
-    // Function to play audios
-    async function playAudios(stringArray) {
-      for (const string of stringArray) {
-        const filename = hashOf(string);
-        const audioElement = document.querySelector(`#${filename}`);
-        await new Promise((resolve) => {
-          audioElement.onended = resolve;
-          audioElement.play();
-        });
+        let targetElement = document.querySelector(`#${array}-${indexInArray}`);
+        if (targetElement) {
+          targetElement.appendChild(audioPlayer);
+          array[indexInArray].push({ filename });
+        } else {
+          console.error(`Target element #${array}-${indexInArray} not found`);
+        }
+      } catch (error) {
+        console.error('Error fetching audio:', error);
       }
     }
 
-    // Function to play the game
-    function playGame(players, subArrays, index = 0) {
-      const basePlayer = players[index % players.length];
-      const randomSubArray1 = subArrays[0][Math.floor(Math.random() * subArrays[0].length)];
-      const randomSubArray2 = subArrays[1][Math.floor(Math.random() * subArrays[1].length)];
-
-      const nextMove = [basePlayer, randomSubArray1, randomSubArray2];
-      playAudios(nextMove).then(() => {
-        if (!document.querySelector(`#Pause`).checked) {
-          setTimeout(() => playGame(players, subArrays, index + 1), 5000);
+    function playAudios(stringArray) {
+      stringArray.forEach(string => {
+        let filename = hashOf(string);
+        let audioElement = document.querySelector(`#${filename}`);
+        if (audioElement) {
+          audioElement.play().catch(error => console.error('Error playing audio:', error));
+        } else {
+          console.error(`Audio element #${filename} not found`);
         }
       });
     }
 
-    // Function to create the game
+    function playGame(nextPlayer) {
+      let nextMove = [nextPlayer];
+      subArrays.forEach((subArray, i) => {
+        nextMove.push(random(subArray));
+      });
+
+      playAudios(nextMove);
+
+      setTimeout(() => {
+        if (!document.querySelector('#Pause').checked) {
+          playGame(indexOfNextPlayer + 1);
+        }
+      }, 5000);
+    }
+
     function createGame() {
-      const players = Array.from(document.querySelectorAll('#base-array-container input')).map(input => input.value);
-      const subArray1 = Array.from(document.querySelectorAll('#sub-array-1-container input')).map(input => input.value);
-      const subArray2 = Array.from(document.querySelectorAll('#sub-array-2-container input')).map(input => input.value);
+      let players = document.querySelectorAll('#base-array input');
+      if (players.length === 0) {
+        console.error('No players found');
+        return;
+      }
 
-      // Create audio elements for the first move
-      createAudio(players[0], 'base-array', 0);
-      createAudio(subArray1[0], 'sub-array-1', 0);
-      createAudio(subArray2[0], 'sub-array-2', 0);
+      let playerName = players[0].value;
+      createAudio(playerName, 'base-array', 0);
+      moveLog.push([playerName]);
 
-      // Store the arrays
-      moveLog = [[players[0], subArray1[0], subArray2[0]]];
-      playGame(players, [subArray1, subArray2], 1);
+      let subArrayForms = document.querySelectorAll('#sub-arrays form');
+      subArrayForms.forEach((form, index) => {
+        let subArrayName = form.querySelector('input').value;
+        let indexInArray = index; // Assuming one value for simplicity
+        createAudio(subArrayName, `sub-array-${index}`, indexInArray);
+        moveLog[0].push(subArrayName);
+      });
 
-      // Create audio elements for all moves
-      players.forEach((player, i) => createAudio(player, 'base-array', i));
-      subArray1.forEach((move, i) => createAudio(move, 'sub-array-1', i));
-      subArray2.forEach((move, i) => createAudio(move, 'sub-array-2', i));
+      playAudios(moveLog[0]);
+
+      players.forEach((player, i) => {
+        let hash = hashOf(player.value);
+        createAudio(player.value, 'base-array', i);
+      });
+
+      subArrayForms.forEach((form, i) => {
+        let subArrayInput = form.querySelectorAll('input');
+        subArrayInput.forEach((move, j) => {
+          let hash = hashOf(move.value);
+          createAudio(move.value, `sub-array-${i}`, j);
+        });
+      });
+
+      playGame(players[1].value);
     }
 
-    // Hash function (placeholder)
-    function hashOf(text) {
-      return text.split('').reduce((a,b) => ((a<<5)-a)+b.charCodeAt(0), 0);
-    }
+    document.querySelector('#create_game').addEventListener('click', createGame);
   </script>
 </body>
 </html>

@@ -25,7 +25,7 @@ def text_to_audio(text: str, lang: str = None, filename: str = None) -> str:
         lang = detect(text)
         print("\n\n\nset lang to: ", lang)
         # Sometimes by mistake english is mistaken as german or danish
-        if lang in ['da', 'de']:
+        if lang is not ('lv' or 'en'):
             lang = 'en'
     # Replace URLs with the word "url"
     text = re.sub(r'https?://\S+', 'web link', text)
