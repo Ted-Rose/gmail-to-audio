@@ -77,7 +77,7 @@
     </div>
     
     <div id="sub-array-1-container">
-      <label for="sub-array-1-0">Dzīvnieku lauki</label>
+      <label for="sub-array-1-0">Dzīvnieku lauki (ja nav - atstāt tukšu)</label>
       <div id="sub-array-1-0">
         <input type="text" name="sub-array-1" value="Lauva">
       </div>
@@ -107,8 +107,10 @@
 
     <button type="button" id="create_game" onclick="createGame()">Spēlēt!</button>
   </form>
-  
-  <input type="checkbox" id="Pause" name="Pause" value="Pauze">Pauze
+  <div>
+    <input type="checkbox" id="Pause" name="Pause" value="Pauze"> 
+    Pauze
+  </div>
   
   <script>
     let moveLog = [];
@@ -167,6 +169,17 @@
       }
     }
 
+    // Function to remove empty input fields
+    function removeEmptyFields(containerId, arrayName) {
+      const container = document.getElementById(containerId);
+      const inputs = container.querySelectorAll(`input[name="${arrayName}"]`);
+      inputs.forEach(input => {
+        if (input.value.trim() === '') {
+          container.removeChild(input.parentElement);
+        }
+      });
+    }
+
     // Function to play the game
     function playGame(players, subArrays, index = 0) {
       const basePlayer = players[index % players.length];
@@ -186,6 +199,12 @@
 
     // Function to create the game
     function createGame() {
+      // Remove empty input fields before creating the game
+      removeEmptyFields('base-array-container', 'base-array');
+      removeEmptyFields('sub-array-1-container', 'sub-array-1');
+      removeEmptyFields('sub-array-2-container', 'sub-array-2');
+      removeEmptyFields('sub-array-3-container', 'sub-array-3');
+
       const players = Array.from(document.querySelectorAll('#base-array-container input')).map(input => input.value);
       const subArray1 = Array.from(document.querySelectorAll('#sub-array-1-container input')).map(input => input.value);
       const subArray2 = Array.from(document.querySelectorAll('#sub-array-2-container input')).map(input => input.value);
