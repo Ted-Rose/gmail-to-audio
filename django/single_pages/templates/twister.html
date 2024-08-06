@@ -11,19 +11,25 @@
   <form id="arrays-form">
     <div id="base-array-container">
       <label for="base-array-0">Spelētāji</label>
-      <input type="text" id="base-array-0" name="base-array" value="Kārlis">
+      <div id="base-array-0">
+        <input type="text" name="base-array" value="Kārlis">
+      </div>
       <button type="button" onclick="addField('base-array-container', 'base-array')">Pievienot lauku</button>
     </div>
     
     <div id="sub-array-1-container">
       <label for="sub-array-1-0">Dzīvnieku lauki</label>
-      <input type="text" id="sub-array-1-0" name="sub-array-1" value="Lauva">
+      <div id="sub-array-1-0">
+        <input type="text" name="sub-array-1" value="Lauva">
+      </div>
       <button type="button" onclick="addField('sub-array-1-container', 'sub-array-1')">Pievienot lauku</button>
     </div>
     
     <div id="sub-array-2-container">
       <label for="sub-array-2-0">Krāsu lauki</label>
-      <input type="text" id="sub-array-2-0" name="sub-array-2" value="Sarkanais lauciņš">
+      <div id="sub-array-2-0">
+        <input type="text" name="sub-array-2" value="Sarkanais lauciņš">
+      </div>
       <button type="button" onclick="addField('sub-array-2-container', 'sub-array-2')">Pievienot lauku</button>
     </div>
     
@@ -38,12 +44,14 @@
     // Function to add a new input field
     function addField(containerId, arrayName) {
       const container = document.getElementById(containerId);
-      const inputCount = container.getElementsByTagName('input').length;
+      const inputCount = container.getElementsByTagName('div').length;
+      const newDiv = document.createElement('div');
+      newDiv.id = `${arrayName}-${inputCount}`;
       const newField = document.createElement('input');
       newField.type = 'text';
       newField.name = arrayName;
-      newField.id = `${arrayName}-${inputCount}`;
-      container.appendChild(newField);
+      newDiv.appendChild(newField);
+      container.appendChild(newDiv);
     }
 
     // Function to create audio element
@@ -55,7 +63,12 @@
           const audioPlayer = document.createElement('audio');
           audioPlayer.controls = true;
           audioPlayer.src = data.audio_url;
-          document.querySelector(`#${array}-${indexInArray}`).appendChild(audioPlayer);
+          const targetDiv = document.getElementById(`${array}-${indexInArray}`);
+          if (targetDiv) {
+            targetDiv.appendChild(audioPlayer);
+          } else {
+            console.error(`Target element #${array}-${indexInArray} not found`);
+          }
         })
         .catch(error => console.error('Error fetching audio:', error));
     }
@@ -64,11 +77,15 @@
     async function playAudios(stringArray) {
       for (const string of stringArray) {
         const filename = hashOf(string);
-        const audioElement = document.querySelector(`#${filename}`);
-        await new Promise((resolve) => {
-          audioElement.onended = resolve;
-          audioElement.play();
-        });
+        const audioElement = document.getElementById(filename);
+        if (audioElement) {
+          await new Promise((resolve) => {
+            audioElement.onended = resolve;
+            audioElement.play();
+          });
+        } else {
+          console.error(`Audio element #${filename} not found`);
+        }
       }
     }
 
@@ -80,7 +97,7 @@
 
       const nextMove = [basePlayer, randomSubArray1, randomSubArray2];
       playAudios(nextMove).then(() => {
-        if (!document.querySelector(`#Pause`).checked) {
+        if (!document.getElementById('Pause').checked) {
           setTimeout(() => playGame(players, subArrays, index + 1), 5000);
         }
       });
@@ -109,7 +126,7 @@
 
     // Hash function (placeholder)
     function hashOf(text) {
-      return text.split('').reduce((a,b) => ((a<<5)-a)+b.charCodeAt(0), 0);
+      return 'hash' + text.split('').reduce((a,b) => ((a<<5)-a)+b.charCodeAt(0), 0);
     }
   </script>
 </body>
