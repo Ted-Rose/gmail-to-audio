@@ -8,9 +8,7 @@ app_name = 'main'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('', include('google_api.urls')),
-    path('google/', include('google_api.urls', namespace='google_api')),
-    path('single_pages/', include('single_pages.urls', namespace='single_pages')),
-    # path('', include('single_pages.urls')),
+    path('', include('google_api.urls', namespace='google_api')),
+    path('', include('single_pages.urls', namespace='single_pages')),
     path('', views.home),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

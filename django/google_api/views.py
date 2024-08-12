@@ -25,7 +25,6 @@ def gmail(request):
     return render(request, 'gmail.html')
 
 
-
 def audio(request):
     if request.method == 'GET':
         text = request.GET.get('text')
