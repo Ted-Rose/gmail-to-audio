@@ -3,14 +3,6 @@ from google_api.utils import get_messages, text_to_audio, google_auth
 from django.http import JsonResponse
 
 
-def home(request):
-    return render(request, 'home.html')
-
-
-def twister(request):
-    return render(request, 'twister.html')
-
-
 def gmail(request):
     if 'get_messages' in request.GET:
         creds = request.session.get('google_credentials')
