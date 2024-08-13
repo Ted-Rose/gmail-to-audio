@@ -24,22 +24,24 @@ def text_to_audio(text: str, lang: str = None, filename: str = None) -> str:
     if lang is None:
         lang = detect(text)
         print("\n\n\nset lang to: ", lang)
-        # Sometimes by mistake english is mistaken as german or danish
-        if lang in ['da', 'de']:
+        # Sometimes by mistake English is mistaken as German or Danish
+        if lang not in ['lv', 'en']:
             lang = 'en'
-    # Replace URLs with the word "url"
+    
+    # Replace URLs with the word "web link"
     text = re.sub(r'https?://\S+', 'web link', text)
     # Remove long dashes
     text = re.sub(r'-{2,}', '', text)
 
-    audio = gTTS(text=text, lang=lang, slow=False)
     filename = 'message_audio.mp3' if filename is None else str(filename) + '.mp3'
-    audio_file_path = os.path.join(
-        settings.MEDIA_ROOT,
-        "recordings",
-        filename
-    )
-    audio.save(audio_file_path)
+    audio_file_path = os.path.join(settings.MEDIA_ROOT, "recordings", filename)
+    
+    # Check if the file already exists
+    if not os.path.exists(audio_file_path):
+        # If it doesn't exist, create the audio file
+        audio = gTTS(text=text, lang=lang, slow=False)
+        audio.save(audio_file_path)
+    
     audio_url = settings.MEDIA_URL + 'recordings/' + filename
     return audio_url
 

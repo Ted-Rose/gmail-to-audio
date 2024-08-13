@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'google_api',
+    'single_pages',
 ]
 
 if DEBUG:
@@ -66,7 +67,10 @@ ROOT_URLCONF = 'django_apps.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / "templates",  # If you have a project-wide templates folder
+            BASE_DIR / "django_apps/templates",  # Add this line to include your app's templates directory
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
