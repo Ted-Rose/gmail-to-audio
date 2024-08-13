@@ -29,7 +29,8 @@ def audio(request):
     if request.method == 'GET':
         text = request.GET.get('text')
         filename = request.GET.get('filename')
-        audio_url = text_to_audio(text=text, filename=filename)
+        lang = request.GET.get('lang')
+        audio_url = text_to_audio(text=text, lang=lang, filename=filename)
         
         # Return the audio URL as JSON response
         return JsonResponse({'audio_url': audio_url})
