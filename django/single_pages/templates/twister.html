@@ -83,7 +83,7 @@
     <div id="sub-array-1-container">
       <label for="sub-array-1-0">Ķermeņa daļas</label>
       <div id="sub-array-1-0">
-        <input type="text" name="sub-array-1" value="Kreisā kāja">
+        <!-- <input type="text" name="sub-array-1" value="Kreisā kāja">
       </div>
       <div id="sub-array-1-1">
         <input type="text" name="sub-array-1" value="Labā kāja">
@@ -92,7 +92,7 @@
         <input type="text" name="sub-array-1" value="Labā roka">
       </div>
       <div id="sub-array-1-3">
-        <input type="text" name="sub-array-1" value="Kreisā roka">
+        <input type="text" name="sub-array-1" value="Kreisā roka"> -->
       </div>
       <button type="button" onclick="addField('sub-array-1-container', 'sub-array-1')">Pievienot lauku</button>
     </div>
@@ -100,7 +100,7 @@
     <div id="sub-array-2-container">
       <label for="sub-array-2-0">Dzīvnieku lauki (ja nav - atstāt tukšu)</label>
 
-      <div id="sub-array-2-0">
+      <!-- <div id="sub-array-2-0">
         <input type="text" name="sub-array-2" value="Dzīvnieks pēc brīvas izvēles">
       </div>
       <div id="sub-array-2-1">
@@ -119,7 +119,7 @@
         <input type="text" name="sub-array-2" value="Lauva">
       </div>
       <div id="sub-array-2-6">
-        <input type="text" name="sub-array-2" value="Govs">
+        <input type="text" name="sub-array-2" value="Govs"> -->
       </div>
 
       <button type="button" onclick="addField('sub-array-2-container', 'sub-array-2')">Pievienot lauku</button>
@@ -128,7 +128,7 @@
     <div id="sub-array-3-container">
       <label for="sub-array-3-0">Krāsu lauki</label>
 
-      <div id="sub-array-3-0">
+      <!-- <div id="sub-array-3-0">
         <input type="text" name="sub-array-3" value="Krāsas lauciņš pēc brīvas izvēles">
       </div>
       <div id="sub-array-3-1">
@@ -141,8 +141,8 @@
         <input type="text" name="sub-array-3" value="Dzeltens lauciņš">
       </div>
       <div id="sub-array-3-4">
-        <input type="text" name="sub-array-3" value="Zaļš lauciņš">
-      </div>
+        <input type="text" name="sub-array-3" value="Zaļš lauciņš"> -->
+      <!-- </div> -->
 
       <button type="button" onclick="addField('sub-array-3-container', 'sub-array-3')">Pievienot lauku</button>
     </div>
@@ -161,6 +161,7 @@
   
   <script>
     let moveLog = [];
+    let audioChunks = [];
 
     // Function to add a new input field
     function addField(containerId, arrayName) {
@@ -171,16 +172,67 @@
       const newField = document.createElement('input');
       newField.type = 'text';
       newField.name = arrayName;
+      const recordButton = document.createElement('button');
+      recordButton.type = 'button';
+      recordButton.textContent = '🎤';
+      recordButton.onclick = () => startRecording(arrayName, inputCount);
       newDiv.appendChild(newField);
+      newDiv.appendChild(recordButton);
       container.insertBefore(newDiv, container.lastElementChild);
     }
+
+
+    // Function to start recording audio
+    function startRecording(arrayName, index) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = event => {
+            if (!audioChunks) audioChunks[arrayName] = {};
+            audioChunks[arrayName] = {}
+            console.log("creating audio chunk")
+            audioChunks[arrayName][index] = event.data;
+          };
+          // mediaRecorder.onstop = () => {
+          //   saveRecording(arrayName, index);
+          // };
+          mediaRecorder.start();
+          setTimeout(() => mediaRecorder.stop(), 3000);  // Stops recording after 3 seconds
+        })
+        .catch(error => console.error('Error accessing microphone:', error));
+    }
+
+
+    // // Function to save recording
+    // function saveRecording(arrayName, index) {
+    //   console.log("Saving recording")
+    //   const audioBlob = audioChunks[arrayName][index];
+    //   const formData = new FormData();
+    //   formData.append('audio', audioBlob, `${arrayName}-${index}.wav`);
+
+    //   fetch('/save-audio/', {  // You need to handle this endpoint in your Django backend
+    //     method: 'POST',
+    //     body: formData,
+    //   })
+    //   .then(response => response.json())
+    //   .then(data => {
+    //     const audioUrl = data.audio_url;
+    //     const audioElement = document.createElement('audio');
+    //     audioElement.controls = false;
+    //     audioElement.src = audioUrl;
+    //     audioElement.id = `${arrayName}-${index}-recorded`;
+    //     document.getElementById(`${arrayName}-${index}`).appendChild(audioElement);
+    //   })
+    //   .catch(error => console.error('Error saving audio:', error));
+    // }
+
 
     // Function to create audio element
     function createAudio(text, array, indexInArray) {
       const filename = hashOf(text);
-      const existingAudio = document.getElementById(filename);
-      if (existingAudio) {
-        console.log(`Audio element with id ${filename} already exists.`);
+      const existingAudio = document.getElementById(`${array}-${indexInArray}-generated`);
+      if (existingAudio || document.getElementById(`${array}-${indexInArray}-recorded`)) {
+        console.log(`Audio element with id ${array}-${indexInArray} already exists.`);
         return;
       }
       fetch(`/text-to-audio?text=${encodeURIComponent(text)}&filename=${filename}&lang=lv`)
@@ -189,7 +241,7 @@
           const audioPlayer = document.createElement('audio');
           audioPlayer.controls = false;
           audioPlayer.src = data.audio_url;
-          audioPlayer.id = filename;
+          audioPlayer.id = `${array}-${indexInArray}-generated`;
           const targetDiv = document.getElementById(`${array}-${indexInArray}`);
           if (targetDiv) {
             targetDiv.appendChild(audioPlayer);
@@ -200,11 +252,13 @@
         .catch(error => console.error('Error fetching audio:', error));
     }
 
+
     // Function to play audios
     async function playAudios(stringArray) {
+      console.log("stringArray: ", stringArray)
       for (const string of stringArray) {
         const filename = hashOf(string);
-        const audioElement = document.getElementById(filename);
+        const audioElement = document.getElementById(`${filename}-generated`) || document.getElementById(`${filename}-recorded`);
         if (audioElement) {
           await new Promise((resolve) => {
             audioElement.onended = resolve;
@@ -216,13 +270,21 @@
       }
     }
 
+
     // Function to remove empty input fields
     function removeEmptyFields(containerId, arrayName) {
       const container = document.getElementById(containerId);
       const inputs = container.querySelectorAll(`input[name="${arrayName}"]`);
+      
       inputs.forEach(input => {
-        if (input.value.trim() === '') {
-          container.removeChild(input.parentElement);
+        const parentDiv = input.parentElement;
+        const audioElement = parentDiv.querySelector('audio');
+
+        const isInputEmpty = input.value.trim() === '';
+        const isAudioAbsent = !audioElement;
+
+        if (isInputEmpty && isAudioAbsent) {
+          container.removeChild(parentDiv);
         }
       });
     }
