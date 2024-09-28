@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'google_api',
     'single_pages',
+    'tv_archive',
 ]
 
 if DEBUG:
