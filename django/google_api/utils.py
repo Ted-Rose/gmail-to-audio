@@ -130,31 +130,29 @@ def get_messages(query, creds):
         
         for message in messages:
             message_id = message['id']
-            # Retrieve the raw message
             msg = service.users().messages().get(userId="me", id=message_id, format='raw').execute()
             msg_str = base64.urlsafe_b64decode(msg['raw'].encode('ASCII'))
             mime_message = BytesParser(policy=policy.default).parsebytes(msg_str)
 
-            # Extract the subject and from headers
             subject = mime_message['subject']
             sender = mime_message['from']
 
-            # Initialize the body
             body = None
             charset = mime_message.get_content_charset('utf-8')
+            print("\ncharset:\n", charset)
             if mime_message.is_multipart():
                 for part in mime_message.iter_parts():
                     if part.get_content_type() == 'text/plain':
                         body = part.get_payload(decode=True).decode(charset, errors='replace')
                         break
+                    elif part.get_content_type() == 'text/html':
+                        body = extract_text_from_html(part.get_payload(decode=True).decode(charset, errors='replace'))
+                        break
                 if not body:
-                    body = 'Multipart message without plain text part!'
+                    body = 'Multipart message without text part!'
             else:
                 body = mime_message.get_payload(decode=True).decode(charset, errors='replace')
-
-            # Try to remove any html elements if present
             body = extract_text_from_html(body)
-            # Add message details to the list
             message_details.append({
                 'id': message_id,
                 'subject': subject,
