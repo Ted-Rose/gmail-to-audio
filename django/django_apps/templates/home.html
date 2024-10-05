@@ -4,15 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        h1, h2 {
+            margin: 10px 0;
+        }
+        div {
+            margin-bottom: 15px;
+        }
+        a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            padding: 5px 10px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            background-color: #f0f8ff;
+        }
+        a:hover {
+            background-color: #e0e8ff;
+        }
+    </style>
 </head>
 <body>
     <h1>Hi, I'm Tedis</h1>
     <h2>I built this webpage to provide some useful tools for me. Some of them might be useful to you as well:</h2>
     <div>
-      <a><a href="{% url 'google_api:gmail' %}">Get Emails</a>
+        <a href="{% url 'google_api:gmail' %}">Get Emails</a>
     </div>
     <div>
-      <a><a href="{% url 'single_pages:twister' %}">Play Twister (let me read randomly the moves for you)</a>
+        <a href="{% url 'single_pages:twister' %}">Play Twister (let me read randomly the moves for you)</a>
     </div>
 </body>
 </html>
