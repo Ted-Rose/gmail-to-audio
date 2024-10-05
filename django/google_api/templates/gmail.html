@@ -9,6 +9,30 @@
 
 <body>
     <h1>Get emails!</h1>
+    <style>
+      body {
+          font-family: Arial, sans-serif;
+          margin: 20px;
+      }
+      h1, h2, p {
+          margin: 10px 0;
+      }
+      button {
+          padding: 5px 10px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          background-color: #f0f8ff;
+          cursor: pointer;
+          font-family: inherit;
+      }
+      button:hover {
+          background-color: #e0e8ff;
+      }
+      .message-body {
+          display: none;  /* Hide the body content initially */
+          margin-top: 5px;
+      }
+  </style>
     <form method="get" action="">
       <label for="query">Filter what emails you would like to fetch:</label>
       <input type="text" id="query" name="query" value="is: unread">
@@ -24,7 +48,8 @@
             <p>Message id: {{ message.id }}</p>
             <p class="subject">Subject: {{ message.subject }}</p>
             <p class="sender">Sender: {{ message.sender }}</p>
-            <p class="body">Body: {{ message.body }}</p>
+            <p class="body-toggle">Body: <button type="button">Show</button></p>
+            <p class="message-body">Body: {{ message.body }}</p>
             <div id="audio-player-{{ message.id }}"></div>
             <form method="get" action="" class="create-audio-form">
                 <input type="hidden" name="message-id" value="{{ message.id }}">
@@ -45,7 +70,14 @@
 
       let currentIndex = 0;      
       let AutoplayIds = []
-
+      const bodyToggleButtons = document.querySelectorAll('.body-toggle button');
+        bodyToggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const messageBody = this.parentElement.nextElementSibling;
+                messageBody.style.display = messageBody.style.display === 'none' ? 'block' : 'none';
+                this.textContent = messageBody.style.display === 'none' ? 'Show' : 'Hide';
+              });
+            });
       function createAllAudios(firstMessageId, playOnlyFirst = false) {
         AutoplayIds = [];
         const startIndex = messageIds.findIndex(id => id === firstMessageId);
@@ -70,7 +102,7 @@
             const messageAudio = container.querySelector(`audio`);
             const subject = container.querySelector('.subject').textContent;
             const sender = container.querySelector('.sender').textContent;
-            const body = container.querySelector('.body').textContent;
+            const body = container.querySelector('.message-body').textContent;
 
             if (!messageAudio) {
               messageString = subject + "\n" + sender + "\n" + body;
