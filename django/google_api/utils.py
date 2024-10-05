@@ -139,7 +139,6 @@ def get_messages(query, creds):
 
             body = None
             charset = mime_message.get_content_charset('utf-8')
-            print("\ncharset:\n", charset)
             if mime_message.is_multipart():
                 for part in mime_message.iter_parts():
                     if part.get_content_type() == 'text/plain':
@@ -152,7 +151,21 @@ def get_messages(query, creds):
                     body = 'Multipart message without text part!'
             else:
                 body = mime_message.get_payload(decode=True).decode(charset, errors='replace')
+            
             body = extract_text_from_html(body)
+            if sender == "e-klase <notifikacijas@e-klase.lv>":
+                # Extract subject using a regular expression
+                subject_match = re.search(r"Tēma: (.*?)\.", body)
+                if subject_match:
+                    subject = subject_match.group(1).strip()
+                    subject = "Ziņa no Eklases: " + subject
+
+                # Extract the main body content, excluding the boilerplate and subject
+                body_pattern = r"Labdien!(.*)_______________________________________________Lai atbildētu vai pārsūtītu"
+                body_match = re.search(body_pattern, body, re.DOTALL)
+                if body_match:
+                    body = body_match.group(1).strip()
+            
             message_details.append({
                 'id': message_id,
                 'subject': subject,
