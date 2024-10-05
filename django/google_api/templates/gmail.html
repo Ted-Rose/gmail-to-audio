@@ -7,7 +7,7 @@
     <title>Gmail to Audio</title>
     <style>
         body {
-            font-family: Arial, sans-serif; /* Set the desired font family */
+            font-family: Arial, sans-serif;
             margin: 20px;
         }
         h1, h2, p {
@@ -15,14 +15,18 @@
         }
         button {
             padding: 5px 10px;
-            border: 1px solid #ddd; /* Adjust border color as needed */
+            border: 1px solid #ddd;
             border-radius: 4px;
-            background-color: #f0f8ff;  /* Adjust background color as needed */
-            cursor: pointer; /* Indicate clickable buttons */
-            font-family: inherit; /* Inherit font family from body */
+            background-color: #f0f8ff;
+            cursor: pointer;
+            font-family: inherit;
         }
         button:hover {
-            background-color: #e0e8ff; /* Adjust hover color as needed */
+            background-color: #e0e8ff;
+        }
+        .message-body {
+            display: none;  /* Hide the body content initially */
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -43,7 +47,8 @@
             <p>Message id: {{ message.id }}</p>
             <p class="subject">Subject: {{ message.subject }}</p>
             <p class="sender">Sender: {{ message.sender }}</p>
-            <p class="body">Body: {{ message.body }}</p>
+            <p class="body-toggle">Body: <button type="button">Show</button></p>
+            <p class="message-body">Body: {{ message.body }}</p>
             <div id="audio-player-{{ message.id }}"></div>
             <form method="get" action="" class="create-audio-form">
                 <input type="hidden" name="message-id" value="{{ message.id }}">
@@ -55,6 +60,14 @@
     {% endif %}
 
     <script>
-      </script>
+        const bodyToggleButtons = document.querySelectorAll('.body-toggle button');
+        bodyToggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const messageBody = this.parentElement.nextElementSibling;
+                messageBody.style.display = messageBody.style.display === 'none' ? 'block' : 'none';
+                this.textContent = messageBody.style.display === 'none' ? 'Show' : 'Hide';
+            });
+        });
+    </script>
 </body>
 </html>
