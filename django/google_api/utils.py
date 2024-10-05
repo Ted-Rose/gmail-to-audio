@@ -160,23 +160,11 @@ def get_messages(query, creds):
                 if subject_match:
                     subject = subject_match.group(1).strip()
 
-# Extract the main body content, excluding boilerplate, subject, and recipient info
+                # Extract the main body content, excluding boilerplate, subject, and recipient info
                 body_pattern = r"Kam: ([\s\S]*?)(?=_______________________________________________Lai atbildētu vai pārsūtītu)"
                 body_match = re.search(body_pattern, body, re.DOTALL)
                 if body_match:
                     body = body_match.group(1).strip()
-
-                    # Remove recipient info up to the first comma after "Kam:"
-                    body_parts = body.split("Kam:")
-                    if len(body_parts) > 1:
-                        first_part, rest = body_parts[0], body_parts[1]
-                        comma_index = rest.find(",")
-                        if comma_index > -1:
-                            body = first_part + rest[:comma_index].strip()
-
-                    # Remove everything after the first occurrence of "Labdien!"
-                    # This ensures we only keep the relevant part of the message
-                    body = body.split("Labdien!", 1)[-1].strip()
 
                     # Remove any remaining HTML tags
                     soup = BeautifulSoup(body, 'html.parser')
@@ -184,12 +172,7 @@ def get_messages(query, creds):
 
                     # Remove extra whitespace
                     body = re.sub(r'\s+', ' ', body).strip()
-
-                    body_pattern_new = r"Kam: ([\s\S]*?),"
-                    body_match_new = re.search(body_pattern_new, body, re.DOTALL)
-                    if body_match_new:
-                        body = body_match_new.group(1).strip()
-            
+              
             message_details.append({
                 'id': message_id,
                 'subject': subject,
