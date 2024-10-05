@@ -172,7 +172,11 @@ def get_messages(query, creds):
 
                     # Remove extra whitespace
                     body = re.sub(r'\s+', ' ', body).strip()
-              
+
+                    body_start_pattern = r".*?Lai aplūkotu pielikumus, pieslēdzieties E-klasei\."
+                    new_body = re.sub(body_start_pattern, '', body, flags=re.DOTALL)
+                    body = new_body.strip()
+
             message_details.append({
                 'id': message_id,
                 'subject': subject,
