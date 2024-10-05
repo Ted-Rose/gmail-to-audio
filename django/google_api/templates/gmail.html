@@ -5,30 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gmail to Audio</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1, h2, p {
-            margin: 10px 0;
-        }
-        button {
-            padding: 5px 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: #f0f8ff;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        button:hover {
-            background-color: #e0e8ff;
-        }
-        .message-body {
-            display: none;  /* Hide the body content initially */
-            margin-top: 5px;
-        }
-    </style>
 </head>
 
 <body>
@@ -39,6 +15,7 @@
       <button type="submit" name="get_messages">Get Emails</button>
   </form>
 
+    <!-- Display email list if available -->
     {% if messages %}
         <h2>Found some emails!</h2>
 
@@ -47,8 +24,7 @@
             <p>Message id: {{ message.id }}</p>
             <p class="subject">Subject: {{ message.subject }}</p>
             <p class="sender">Sender: {{ message.sender }}</p>
-            <p class="body-toggle">Body: <button type="button">Show</button></p>
-            <p class="message-body">Body: {{ message.body }}</p>
+            <p class="body">Body: {{ message.body }}</p>
             <div id="audio-player-{{ message.id }}"></div>
             <form method="get" action="" class="create-audio-form">
                 <input type="hidden" name="message-id" value="{{ message.id }}">
@@ -60,14 +36,139 @@
     {% endif %}
 
     <script>
-        const bodyToggleButtons = document.querySelectorAll('.body-toggle button');
-        bodyToggleButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const messageBody = this.parentElement.nextElementSibling;
-                messageBody.style.display = messageBody.style.display === 'none' ? 'block' : 'none';
-                this.textContent = messageBody.style.display === 'none' ? 'Show' : 'Hide';
+      let messageIds = [];
+
+      document.addEventListener("DOMContentLoaded", () => {
+          const messageIdElements = document.querySelectorAll('input[name="message-id"]');
+          messageIds = Array.from(messageIdElements).map(input => input.value);
+      });
+
+      let currentIndex = 0;      
+      let AutoplayIds = []
+
+      function createAllAudios(firstMessageId, playOnlyFirst = false) {
+        AutoplayIds = [];
+        const startIndex = messageIds.findIndex(id => id === firstMessageId);
+        if (startIndex === -1) {
+            console.error("Invalid messageId");
+            return;
+        }
+
+        let endIndex = startIndex - 1;
+        if (endIndex < 0) {
+            endIndex = messageIds.length - 1;
+        }
+
+        let iterationCount = 0;
+        
+        for (
+          let i = startIndex;
+          iterationCount < messageIds.length;
+          i = (i + 1) % messageIds.length) {
+            messageId = messageIds[i]
+            const container = document.querySelector(`#message-${messageId}-container`);
+            const messageAudio = container.querySelector(`audio`);
+            const subject = container.querySelector('.subject').textContent;
+            const sender = container.querySelector('.sender').textContent;
+            const body = container.querySelector('.body').textContent;
+
+            if (!messageAudio) {
+              messageString = subject + "\n" + sender + "\n" + body;
+              createAudio(messageString, messageId);
+            }
+            AutoplayIds.push(messageIds[i]);
+            iterationCount++;
+        }
+        autoplayAudios(AutoplayIds, playOnlyFirst);
+      }
+
+
+      function autoplayAudios(AutoplayIds, playOnlyFirst) {
+        let currentIndex = 0;
+
+        function waitForAudioElement(currentId, callback) {
+          const interval = setInterval(() => {
+            const audioElement = document.querySelector(`#message-${currentId}-container audio`);
+            if (audioElement) {
+              clearInterval(interval);
+              callback(audioElement);
+            }
+          }, 100); // Check every 100ms
+        }
+
+
+        function playNextAudio(playOnlyFirst = null) {
+          playableAudiosCount = messageIds.length;
+          if (playOnlyFirst) {
+            playableAudiosCount = 1
+          }
+
+          if (currentIndex >= playableAudiosCount) {
+            return; // All audios played
+          }
+          const currentId = AutoplayIds[currentIndex];
+          waitForAudioElement(currentId, (audioElement) => {
+            audioElement.addEventListener('loadeddata', function onLoadedData() {
+              audioElement.removeEventListener('loadeddata', onLoadedData); // Clean up the event listener
+              audioElement.play();
             });
-        });
+
+            audioElement.addEventListener('ended', function onAudioEnd() {
+              audioElement.removeEventListener('ended', onAudioEnd); // Clean up the event listener
+              currentIndex++;
+              if (!playOnlyFirst) {
+                playNextAudio(); // Play the next audio
+              }
+            });
+
+            // Check if audio is already ready to play
+            if (audioElement.readyState >= 3) {
+              audioElement.play();
+            }
+          });
+        }
+
+        playNextAudio(playOnlyFirst);
+      }
+
+
+      // Create an audio player for message
+      function createAudio(text, messageId, autoplay = false) {
+          fetch(`/text-to-audio?text=${encodeURIComponent(text)}&filename=${messageId}`)
+              .then(response => response.json())
+              .then(data => {
+                  let audioPlayer = document.createElement('audio');
+                  audioPlayer.controls = true;
+                  audioPlayer.src = data.audio_url;
+                  document.querySelector(`#message-${messageId}-container`).appendChild(audioPlayer);
+                  if (autoplay) {
+                      audioPlayer.autoplay = true;
+                  }
+              })
+              .catch(error => console.error('Error fetching audio:', error));
+
+          };
+
+
+      const playAudioButtons = document.querySelectorAll('.play-audio');
+      playAudioButtons.forEach(button => {
+          button.addEventListener('click', function () {
+              let form = this.parentElement;
+              let messageId = form.querySelector('input[name="message-id"]').value;
+              createAllAudios(messageId, playOnlyCurrent = true);
+          });
+      });
+
+
+      const createAllAudioButtons = document.querySelectorAll('.play-all-audios');
+      createAllAudioButtons.forEach(button => {
+          button.addEventListener('click', function () {
+              let form = this.parentElement;
+              let messageId = form.querySelector('input[name="message-id"]').value;
+              createAllAudios(messageId);
+          });
+      });
+
     </script>
 </body>
 </html>
