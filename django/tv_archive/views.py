@@ -7,6 +7,14 @@ import json
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
+from time import sleep
+import random
+
+
+def random_sleep(min_seconds=1, max_seconds=3):
+    """Sleeps for a random amount of time between min_seconds and max_seconds."""
+    sleep_time = random.randint(min_seconds, max_seconds)
+    sleep(sleep_time)
 
 
 def get_ratings(query, content_type=None):
@@ -18,19 +26,25 @@ def get_ratings(query, content_type=None):
     # The user_agent is required to prevent 403 errors
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6446.75 Safari/537.36"
     headers = {"User-Agent": user_agent}
+    random_sleep()
     response = requests.get(url, headers=headers)
 
     html_content = response.content
     soup = BeautifulSoup(html_content, 'html.parser')
-    link_element = soup.find('div', class_="ipc-metadata-list-summary-item__tc").find('a')
+    summary = soup.find('div', class_="ipc-metadata-list-summary-item__tc")
+    if summary is None:
+        print("Summary not found")
+        return
+
+    link_element = summary.find('a')
 
     if link_element:
         link = "https://www.imdb.com/" + link_element['href']
-        print("First link:", link)
     else:
         print("Link not found")
         return
 
+    random_sleep()
     response = requests.get(link, headers=headers)
 
     html_content = response.content
@@ -96,16 +110,17 @@ def fetch_tv_program_details(url):
         image_element = program.find('img')
         if image_element:
             program_data['image_url'] = image_element['src']
+        print("-" * 20)
         print("title:", program_data['title'])
         get_ratings(program_data['title'], 'tv')
-        return program_data
+
         programs.append(program_data)
 
     return programs
 
 url = "https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date=13-10-2024&channel=tv6_hd"
 programs = fetch_tv_program_details(url)
-print("programs:", programs)
+# print("programs:", programs)
 
 for program in programs:
     print(f"Title: {program.get('title')}")
