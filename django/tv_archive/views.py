@@ -12,14 +12,30 @@ from urllib.parse import quote_plus
 def get_ratings(query, content_type=None):
     # Encode the query with UTF-8 encoding and spaces replaced with '+'
     encoded_query = quote_plus(query, encoding='utf-8')
+
     filter = "?s=tt" if content_type == "movie" else ""
     url = f"https://www.imdb.com/find/{filter}?q={encoded_query}&ref_=nv_sr_sm"
     # The user_agent is required to prevent 403 errors
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6446.75 Safari/537.36"
     headers = {"User-Agent": user_agent}
     response = requests.get(url, headers=headers)
+
     html_content = response.content
     soup = BeautifulSoup(html_content, 'html.parser')
+    link_element = soup.find('div', class_="ipc-metadata-list-summary-item__tc").find('a')
+    # Extract the link from the element
+    if link_element:
+        link = "https://www.imdb.com/" + link_element['href']
+        print("First link:", link)
+    else:
+        print("Link not found")
+        return
+
+    response = requests.get(link, headers=headers)
+
+    html_content = response.content
+    soup = BeautifulSoup(html_content, 'html.parser')
+
     print("soup", soup)
 
     return
