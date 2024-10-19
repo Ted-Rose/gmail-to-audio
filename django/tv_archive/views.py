@@ -3,7 +3,7 @@
 
 # def home(request):
 #     return render(request, 'home.html')
-
+import json
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
@@ -23,7 +23,7 @@ def get_ratings(query, content_type=None):
     html_content = response.content
     soup = BeautifulSoup(html_content, 'html.parser')
     link_element = soup.find('div', class_="ipc-metadata-list-summary-item__tc").find('a')
-    # Extract the link from the element
+
     if link_element:
         link = "https://www.imdb.com/" + link_element['href']
         print("First link:", link)
@@ -36,9 +36,29 @@ def get_ratings(query, content_type=None):
     html_content = response.content
     soup = BeautifulSoup(html_content, 'html.parser')
 
-    print("soup", soup)
+    script_tags = soup.find_all('script', type='application/ld+json')
+    if script_tags:
+        script_tag = script_tags[0]
+        json_data = script_tag.string
+        if json_data:
+            parsed_data = json.loads(json_data)
+
+            type = parsed_data.get("@type")
+            description = parsed_data.get("description")
+            image = parsed_data.get("image")
+            url = parsed_data.get("url")
+            content_rating = parsed_data.get("contentRating")
+            rating_value = parsed_data.get("aggregateRating", {}).get("ratingValue")
+
+            print("type:", type)
+            print("Description:", description)
+            print("Image:", image)
+            print("URL:", url)
+            print("Content Rating:", content_rating)
+            print("Rating Value:", rating_value)
 
     return
+
 
 def fetch_tv_program_details(url):
     try:
