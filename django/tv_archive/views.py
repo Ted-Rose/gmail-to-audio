@@ -6,7 +6,23 @@
 
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import quote_plus
 
+
+def get_ratings(query, content_type=None):
+    # Encode the query with UTF-8 encoding and spaces replaced with '+'
+    encoded_query = quote_plus(query, encoding='utf-8')
+    filter = "?s=tt" if content_type == "movie" else ""
+    url = f"https://www.imdb.com/find/{filter}?q={encoded_query}&ref_=nv_sr_sm"
+    # The user_agent is required to prevent 403 errors
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6446.75 Safari/537.36"
+    headers = {"User-Agent": user_agent}
+    response = requests.get(url, headers=headers)
+    html_content = response.content
+    soup = BeautifulSoup(html_content, 'html.parser')
+    print("soup", soup)
+
+    return
 
 def fetch_tv_program_details(url):
     try:
@@ -44,7 +60,9 @@ def fetch_tv_program_details(url):
         image_element = program.find('img')
         if image_element:
             program_data['image_url'] = image_element['src']
-
+        print("title:", program_data['title'])
+        get_ratings(program_data['title'], 'tv')
+        return program_data
         programs.append(program_data)
 
     return programs
