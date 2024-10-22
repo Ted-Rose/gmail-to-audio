@@ -8,6 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 from time import sleep
+from datetime import datetime, timedelta
 import random
 
 
@@ -74,52 +75,58 @@ def get_ratings(query, content_type=None):
     return
 
 
-def fetch_tv_program_details(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching program details: {e}")
-        return []
+def fetch_tv_program_details():
+    # Oldest available date to fetch data
+    oldest_date = (datetime.now() - timedelta(days=8))
+    # Data is available for span of 16 days
+    for day in range(16):
+        date = (oldest_date + timedelta(days=day)).strftime('%d-%m-%Y')
+        url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date}&channel=tv6_hd"
+        print("url:", url)
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching program details: {e}")
+            return []
 
-    html_content = response.content
-    soup = BeautifulSoup(html_content, 'html.parser')
+        html_content = response.content
+        soup = BeautifulSoup(html_content, 'html.parser')
 
-    program_elements = soup.find_all('div', class_="expander-description")
+        program_elements = soup.find_all('div', class_="expander-description")
 
-    programs = []
-    for program in program_elements:
-        program_data = {}
+        programs = []
+        for program in program_elements:
+            program_data = {}
 
-        title_element = program.find('div', class_="tet-font__headline--s")
-        if title_element:
-            program_data['title'] = title_element.text.strip()
+            title_element = program.find('div', class_="tet-font__headline--s")
+            if title_element:
+                program_data['title'] = title_element.text.strip()
 
-        subtitle_element = program.find('div', class_="subtitle")
-        if subtitle_element:
-            subtitle_text = subtitle_element.text.strip()
-            subtitle_parts = subtitle_text.split('\n')
-            program_data['time'] = subtitle_parts[0].strip()
-            program_data['date'] = subtitle_parts[1].strip()
-            program_data['channel'] = subtitle_parts[2].strip()
+            subtitle_element = program.find('div', class_="subtitle")
+            if subtitle_element:
+                subtitle_text = subtitle_element.text.strip()
+                subtitle_parts = subtitle_text.split('\n')
+                program_data['time'] = subtitle_parts[0].strip()
+                program_data['date'] = subtitle_parts[1].strip()
+                program_data['channel'] = subtitle_parts[2].strip()
 
-        description_element = program.find('div', class_="text tet-font__body--s")
-        if description_element:
-            program_data['description'] = description_element.text.strip()
+            description_element = program.find('div', class_="text tet-font__body--s")
+            if description_element:
+                program_data['description'] = description_element.text.strip()
 
-        image_element = program.find('img')
-        if image_element:
-            program_data['image_url'] = image_element['src']
-        print("-" * 20)
-        print("title:", program_data['title'])
-        get_ratings(program_data['title'], 'tv')
+            image_element = program.find('img')
+            if image_element:
+                program_data['image_url'] = image_element['src']
+            print("-" * 20)
+            print("title:", program_data['title'])
+            get_ratings(program_data['title'], 'tv')
 
-        programs.append(program_data)
+            programs.append(program_data)
 
     return programs
 
-url = "https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date=13-10-2024&channel=tv6_hd"
-programs = fetch_tv_program_details(url)
+programs = fetch_tv_program_details()
 # print("programs:", programs)
 
 for program in programs:
