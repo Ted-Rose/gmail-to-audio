@@ -11,12 +11,10 @@ from time import sleep
 from datetime import datetime, timedelta
 import random
 
-
 def random_sleep(min_seconds=1, max_seconds=3):
     """Sleeps for a random amount of time between min_seconds and max_seconds."""
     sleep_time = random.randint(min_seconds, max_seconds)
     sleep(sleep_time)
-
 
 def get_ratings(query, content_type=None):
     # Encode the query with UTF-8 encoding and spaces replaced with '+'
@@ -24,30 +22,30 @@ def get_ratings(query, content_type=None):
 
     filter = "?s=tt" if content_type == "movie" else ""
     url = f"https://www.imdb.com/find/{filter}?q={encoded_query}&ref_=nv_sr_sm"
+    
     # The user_agent is required to prevent 403 errors
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6446.75 Safari/537.36"
     headers = {"User-Agent": user_agent}
+    
     random_sleep()
     response = requests.get(url, headers=headers)
-
     html_content = response.content
     soup = BeautifulSoup(html_content, 'html.parser')
     summary = soup.find('div', class_="ipc-metadata-list-summary-item__tc")
+    
     if summary is None:
         print("Summary not found")
-        return
+        return None
 
     link_element = summary.find('a')
-
     if link_element:
         link = "https://www.imdb.com/" + link_element['href']
     else:
         print("Link not found")
-        return
+        return None
 
     random_sleep()
     response = requests.get(link, headers=headers)
-
     html_content = response.content
     soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -58,20 +56,24 @@ def get_ratings(query, content_type=None):
         if json_data:
             parsed_data = json.loads(json_data)
 
-    return {
-        "type": parsed_data.get("@type"),
-        "description": parsed_data.get("description"),
-        "image": parsed_data.get("image"),
-        "url": parsed_data.get("url"),
-        "content_rating": parsed_data.get("contentRating"),
-        "rating_value": parsed_data.get("aggregateRating", {}).get("ratingValue")
-    }
-
+            return {
+                "type": parsed_data.get("@type"),
+                "description": parsed_data.get("description"),
+                "image": parsed_data.get("image"),
+                "url": parsed_data.get("url"),
+                "content_rating": parsed_data.get("contentRating"),
+                "rating_value": parsed_data.get("aggregateRating", {}).get("ratingValue")
+            }
+    return None
 
 def fetch_tv_program_details():
+    # Initialize sets to store unique 'type' and 'content_rating' values
+    unique_types = set()
+    unique_content_ratings = set()
+
     # Oldest available date to fetch data
     oldest_date = (datetime.now() - timedelta(days=8))
-    # Data is available for span of 16 days
+    # Data is available for a span of 16 days
     for day in range(16):
         date = (oldest_date + timedelta(days=day)).strftime('%d-%m-%Y')
         url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date}&channel=tv6_hd"
@@ -122,6 +124,12 @@ def fetch_tv_program_details():
                 print("URL:", ratings["url"])
                 print("Content Rating:", ratings["content_rating"])
                 print("Rating Value:", ratings["rating_value"])
+                if ratings["type"]:
+                    unique_types.add(ratings["type"])
+                    print("unique_types:\n", list(unique_types))
+                if ratings["content_rating"]:
+                    print("content_rating:\n", list(unique_content_ratings))
+                    unique_content_ratings.add(ratings["content_rating"])
             else:
                 print(f"No data found for {program_data['title']}")
 
