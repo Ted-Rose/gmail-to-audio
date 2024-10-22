@@ -58,21 +58,14 @@ def get_ratings(query, content_type=None):
         if json_data:
             parsed_data = json.loads(json_data)
 
-            type = parsed_data.get("@type")
-            description = parsed_data.get("description")
-            image = parsed_data.get("image")
-            url = parsed_data.get("url")
-            content_rating = parsed_data.get("contentRating")
-            rating_value = parsed_data.get("aggregateRating", {}).get("ratingValue")
-
-            print("type:", type)
-            print("Description:", description)
-            print("Image:", image)
-            print("URL:", url)
-            print("Content Rating:", content_rating)
-            print("Rating Value:", rating_value)
-
-    return
+    return {
+        "type": parsed_data.get("@type"),
+        "description": parsed_data.get("description"),
+        "image": parsed_data.get("image"),
+        "url": parsed_data.get("url"),
+        "content_rating": parsed_data.get("contentRating"),
+        "rating_value": parsed_data.get("aggregateRating", {}).get("ratingValue")
+    }
 
 
 def fetch_tv_program_details():
@@ -120,7 +113,17 @@ def fetch_tv_program_details():
                 program_data['image_url'] = image_element['src']
             print("-" * 20)
             print("title:", program_data['title'])
-            get_ratings(program_data['title'], 'tv')
+            ratings = get_ratings(program_data['title'], 'tv')
+            if ratings:
+                print(f"IMDb Data for {program_data['title']}:")
+                print("Type:", ratings["type"])
+                print("Description:", ratings["description"])
+                print("Image:", ratings["image"])
+                print("URL:", ratings["url"])
+                print("Content Rating:", ratings["content_rating"])
+                print("Rating Value:", ratings["rating_value"])
+            else:
+                print(f"No data found for {program_data['title']}")
 
             programs.append(program_data)
 
