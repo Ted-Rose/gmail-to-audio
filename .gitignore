@@ -5,4 +5,6 @@ django/media/recordings/*
 !django/media/recordings/.gitkeep
 django/env
 django/google_api/app_secrets.json
+django/settings.json
+django/ca.pem
 local_settings.json

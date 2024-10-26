@@ -10,6 +10,7 @@ from .models import Content
 import re
 from googletrans import Translator
 from difflib import SequenceMatcher
+import logging
 
 
 def home(request):
@@ -68,8 +69,6 @@ def get_ratings(query, content_type=None):
             content_json_data = content_script_tag.string
             content_parsed_data = json.loads(content_json_data)
             content_name = content_parsed_data.get("name")
-            print("content_parsed_data:", content_parsed_data)
-            print("name", content_name)
             return {
                 "name": content_name,
                 "type": parsed_data.get("@type"),
@@ -85,11 +84,11 @@ def fetch_tv_program_details():
     translator = Translator()
 
     channels = {
-        # "viasat_kino": "viasat_kino",
-        # "tv6_hd": "tv6_hd",
-        # "tv3_hd": "tv3_hd",
-        # "8tv_hd": "8tv_hd",
-        # "ltv1_hd": "ltv1_hd",
+        "viasat_kino": "viasat_kino",
+        "tv6_hd": "tv6_hd",
+        "tv3_hd": "tv3_hd",
+        "8tv_hd": "8tv_hd",
+        "ltv1_hd": "ltv1_hd",
         "ltv7_hd": "ltv7_hd",
         }
     # Oldest available date to fetch data
@@ -121,7 +120,6 @@ def fetch_tv_program_details():
 
               # if title_lv != "Kas te? Es te! (atkārtojums)":
               #   continue             
-              # subtitle_element = program.find('div', class_="subtitle")
 
               description_lv = program.find('div', class_="text tet-font__body--s")
               if description_lv:
@@ -142,9 +140,10 @@ def fetch_tv_program_details():
                       src='lv',
                       dest='en'
                   ).text
-                  print("text_eng:", text_eng)
-                  print("text_lv_to_eng:", text_lv_to_eng)
                   ratio = SequenceMatcher(None, text_eng, text_lv_to_eng).ratio()
+                  logging.info(f"text_lv: {text_lv}")
+                  logging.info(f"text_eng: {text_eng}")
+                  logging.info(f"ratio: {ratio}")
                   if ratio < 0.5:
                       continue
                   print("ratio: ", ratio)
@@ -182,5 +181,4 @@ def fetch_tv_program_details():
                   print(f"No data found for {title_lv}")
     return programs
 
-print("programs:", programs)
-# programs = fetch_tv_program_details()
+programs = fetch_tv_program_details()
