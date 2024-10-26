@@ -3,7 +3,8 @@ from django.db import models
 class Content(models.Model):
     title = models.CharField(max_length=255)
     type = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
+    description_lv = models.TextField(blank=True, null=True)
+    description_eng = models.TextField(blank=True, null=True)
     image = models.URLField(blank=True, null=True)
     url = models.URLField()
     content_rating = models.CharField(max_length=50, blank=True, null=True)

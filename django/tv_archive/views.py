@@ -70,13 +70,10 @@ def get_ratings(query, content_type=None):
     return None
 
 def fetch_tv_program_details():
-    # Initialize sets to store unique 'type' and 'content_rating' values
-    unique_types = set()
-    unique_content_ratings = set()
     channels = {
         # "viasat_kino": "viasat_kino",
-        "tv6_hd": "tv6_hd",
-        "tv3_hd": "tv3_hd",
+        # "tv6_hd": "tv6_hd",
+        # "tv3_hd": "tv3_hd",
         "8tv_hd": "8tv_hd",
         "ltv1_hd": "ltv1_hd",
         "ltv7_hd": "ltv7_hd",
@@ -104,63 +101,47 @@ def fetch_tv_program_details():
 
           programs = []
           for program in program_elements:
-              program_data = {}
 
-              title_element = program.find('div', class_="tet-font__headline--s")
-              if title_element:
-                  program_data['title'] = title_element.text.strip()
+              title_lv = program.find('div', class_="tet-font__headline--s")
+              title_lv = title_lv.text.strip()
 
-              subtitle_element = program.find('div', class_="subtitle")
-              if subtitle_element:
-                  subtitle_text = subtitle_element.text.strip()
-                  subtitle_parts = subtitle_text.split('\n')
-                  program_data['time'] = subtitle_parts[0].strip()
-                  program_data['date'] = subtitle_parts[1].strip()
-                  program_data['channel'] = subtitle_parts[2].strip()
+              # subtitle_element = program.find('div', class_="subtitle")
 
-              description_element = program.find('div', class_="text tet-font__body--s")
-              if description_element:
-                  program_data['description'] = description_element.text.strip()
+              description_lv = program.find('div', class_="text tet-font__body--s")
+              if description_lv:
+                  description_lv = description_lv.text.strip()
 
               image_element = program.find('img')
               if image_element:
-                  program_data['image_url'] = image_element['src']
+                  image_url = image_element['src']
+
               print("-" * 20)
-              print("title:", program_data['title'])
-              ratings = get_ratings(program_data['title'], 'tv')
+              print("title:", title_lv)
+              ratings = get_ratings(title_lv, 'tv')
               if ratings:
-                  print(f"IMDb Data for {program_data['title']}:")
+                  print(f"IMDb Data for {title_lv}:")
                   print("Type:", ratings["type"])
                   print("Description:", ratings["description"])
                   print("Image:", ratings["image"])
                   print("URL:", ratings["url"])
                   print("Content Rating:", ratings["content_rating"])
                   print("Rating Value:", ratings["rating_value"])
-                  if ratings["type"]:
-                      unique_types.add(ratings["type"])
-                      print("unique_types:\n", list(unique_types))
-                  if ratings["content_rating"]:
-                      print("content_rating:\n", list(unique_content_ratings))
-                      unique_content_ratings.add(ratings["content_rating"])
-                      description = re.sub(r"&\w+;", "", ratings.get("description", ""))
                   
-                      Content.objects.update_or_create(
-                          title=program_data['title'],
-                          defaults={
-                              'type': ratings.get("type", ""),
-                              'description': description,
-                              'image': ratings.get("image", ""),
-                              'url': ratings.get("url", ""),
-                              'content_rating': ratings.get("content_rating", ""),
-                              'rating_value': ratings.get("rating_value", None),
-                          }
-                      )
+                  Content.objects.update_or_create(
+                      title=title_lv,
+                      defaults={
+                          'type': ratings.get("type", ""),
+                          'description_lv': description_lv,
+                          'description_eng': description,
+                          'image': ratings.get("image", ""),
+                          'url': image_url,
+                          'content_rating': ratings.get("content_rating", ""),
+                          'rating_value': ratings.get("rating_value", None),
+                      }
+                  )
               else:
-                  print(f"No data found for {program_data['title']}")
-
-              programs.append(program_data)
-
+                  print(f"No data found for {title_lv}")
     return programs
 
-programs = fetch_tv_program_details()
 # print("programs:", programs)
+programs = fetch_tv_program_details()
