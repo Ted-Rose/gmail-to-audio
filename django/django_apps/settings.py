@@ -49,10 +49,6 @@ INSTALLED_APPS = [
     'tv_archive',
 ]
 
-if DEBUG:
-    # Redundant on pythonanywhere
-    INSTALLED_APPS.append('sslserver')
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

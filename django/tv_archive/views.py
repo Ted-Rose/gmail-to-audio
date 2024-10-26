@@ -1,8 +1,4 @@
 from django.shortcuts import render
-
-
-def home(request):
-    return render(request, 'home.html')
 import json
 import requests
 from bs4 import BeautifulSoup
@@ -12,12 +8,19 @@ from datetime import datetime, timedelta
 import random
 from .models import Content
 import re
+from googletrans import Translator
+from difflib import SequenceMatcher
 
 
-def random_sleep(min_seconds=1, max_seconds=3):
+def home(request):
+    return render(request, 'home.html')
+
+
+def random_sleep(min_seconds=1, max_seconds=2):
     """Sleeps for a random amount of time between min_seconds and max_seconds."""
     sleep_time = random.randint(min_seconds, max_seconds)
     sleep(sleep_time)
+
 
 def get_ratings(query, content_type=None):
     # Encode the query with UTF-8 encoding and spaces replaced with '+'
@@ -58,10 +61,19 @@ def get_ratings(query, content_type=None):
         json_data = script_tag.string
         if json_data:
             parsed_data = json.loads(json_data)
+            description = re.sub(r"&\w+;", "", parsed_data.get("description"))
 
+            content_script_tags = soup.find_all('script', type='application/ld+json')
+            content_script_tag = content_script_tags[0]
+            content_json_data = content_script_tag.string
+            content_parsed_data = json.loads(content_json_data)
+            content_name = content_parsed_data.get("name")
+            print("content_parsed_data:", content_parsed_data)
+            print("name", content_name)
             return {
+                "name": content_name,
                 "type": parsed_data.get("@type"),
-                "description": parsed_data.get("description"),
+                "description": description,
                 "image": parsed_data.get("image"),
                 "url": parsed_data.get("url"),
                 "content_rating": parsed_data.get("contentRating"),
@@ -70,12 +82,14 @@ def get_ratings(query, content_type=None):
     return None
 
 def fetch_tv_program_details():
+    translator = Translator()
+
     channels = {
         # "viasat_kino": "viasat_kino",
         # "tv6_hd": "tv6_hd",
         # "tv3_hd": "tv3_hd",
-        "8tv_hd": "8tv_hd",
-        "ltv1_hd": "ltv1_hd",
+        # "8tv_hd": "8tv_hd",
+        # "ltv1_hd": "ltv1_hd",
         "ltv7_hd": "ltv7_hd",
         }
     # Oldest available date to fetch data
@@ -105,34 +119,57 @@ def fetch_tv_program_details():
               title_lv = program.find('div', class_="tet-font__headline--s")
               title_lv = title_lv.text.strip()
 
+              # if title_lv != "Kas te? Es te! (atkārtojums)":
+              #   continue             
               # subtitle_element = program.find('div', class_="subtitle")
 
               description_lv = program.find('div', class_="text tet-font__body--s")
               if description_lv:
-                  description_lv = description_lv.text.strip()
-
-              image_element = program.find('img')
-              if image_element:
-                  image_url = image_element['src']
+                  description_lv = re.sub(r"&\w+;", "", description_lv.text.strip())
 
               print("-" * 20)
               print("title:", title_lv)
               ratings = get_ratings(title_lv, 'tv')
               if ratings:
+                  if description_lv is None:
+                      text_lv = title_lv
+                      text_eng = ratings["name"]
+                  else:
+                    text_lv = description_lv
+                    text_eng = ratings["description"]
+                  text_lv_to_eng = translator.translate(
+                      text_lv,
+                      src='lv',
+                      dest='en'
+                  ).text
+                  print("text_eng:", text_eng)
+                  print("text_lv_to_eng:", text_lv_to_eng)
+                  ratio = SequenceMatcher(None, text_eng, text_lv_to_eng).ratio()
+                  if ratio < 0.5:
+                      continue
+                  print("ratio: ", ratio)
                   print(f"IMDb Data for {title_lv}:")
+                  print("translated_description_lv:\n", text_lv_to_eng)
+                  print("Description ENG:", ratings["description"])
+
                   print("Type:", ratings["type"])
-                  print("Description:", ratings["description"])
                   print("Image:", ratings["image"])
                   print("URL:", ratings["url"])
                   print("Content Rating:", ratings["content_rating"])
                   print("Rating Value:", ratings["rating_value"])
-                  
+
+                  # Get image URL
+                  image_element = program.find('img')
+                  image_url = image_element['src'] if image_element else None
+                  image_url = image_url or ratings.get("image")
+                  image_url = image_url if image_url is not None else None
+
                   Content.objects.update_or_create(
                       title=title_lv,
                       defaults={
                           'type': ratings.get("type", ""),
                           'description_lv': description_lv,
-                          'description_eng': description,
+                          'description_eng': ratings["description"],
                           'image': ratings.get("image", ""),
                           'url': image_url,
                           'content_rating': ratings.get("content_rating", ""),
