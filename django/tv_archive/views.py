@@ -10,6 +10,9 @@ from urllib.parse import quote_plus
 from time import sleep
 from datetime import datetime, timedelta
 import random
+from .models import Content
+import re
+
 
 def random_sleep(min_seconds=1, max_seconds=3):
     """Sleeps for a random amount of time between min_seconds and max_seconds."""
@@ -71,7 +74,7 @@ def fetch_tv_program_details():
     unique_types = set()
     unique_content_ratings = set()
     channels = {
-        "viasat_kino": "viasat_kino",
+        # "viasat_kino": "viasat_kino",
         "tv6_hd": "tv6_hd",
         "tv3_hd": "tv3_hd",
         "8tv_hd": "8tv_hd",
@@ -79,11 +82,11 @@ def fetch_tv_program_details():
         "ltv7_hd": "ltv7_hd",
         }
     # Oldest available date to fetch data
-    oldest_date = (datetime.now() - timedelta(days=8))
+    oldest_date = (datetime.now() - timedelta(days=6))
 
     for channel in channels:
-      # Data is available for a span of 16 days
-      for day in range(16):
+      # Data is available for a span of 14 days
+      for day in range(14):
           date = (oldest_date + timedelta(days=day)).strftime('%d-%m-%Y')
           url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date}&channel={channel}]"
           print("url:", url)
@@ -139,6 +142,19 @@ def fetch_tv_program_details():
                   if ratings["content_rating"]:
                       print("content_rating:\n", list(unique_content_ratings))
                       unique_content_ratings.add(ratings["content_rating"])
+                      description = re.sub(r"&\w+;", "", ratings.get("description", ""))
+                  
+                      Content.objects.update_or_create(
+                          title=program_data['title'],
+                          defaults={
+                              'type': ratings.get("type", ""),
+                              'description': description,
+                              'image': ratings.get("image", ""),
+                              'url': ratings.get("url", ""),
+                              'content_rating': ratings.get("content_rating", ""),
+                              'rating_value': ratings.get("rating_value", None),
+                          }
+                      )
               else:
                   print(f"No data found for {program_data['title']}")
 
@@ -148,12 +164,3 @@ def fetch_tv_program_details():
 
 programs = fetch_tv_program_details()
 # print("programs:", programs)
-
-for program in programs:
-    print(f"Title: {program.get('title')}")
-    print(f"Time: {program.get('time')}")
-    print(f"Date: {program.get('date')}")
-    print(f"Channel: {program.get('channel')}")
-    print(f"Description: {program.get('description')}")
-    print(f"Image URL: {program.get('image_url')}")
-    print("-" * 20)
