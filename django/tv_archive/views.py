@@ -174,11 +174,13 @@ def fetch_tv_program_details():
                           'url': image_url,
                           'content_rating': ratings.get("content_rating", ""),
                           'rating_value': ratings.get("rating_value", None),
+                          'start_date': date,
+                          'channel': channel
                       }
                   )
               else:
                   print(f"No data found for {title_lv}")
     return programs
 
-# print("programs:", programs)
-programs = fetch_tv_program_details()
+print("programs:", programs)
+# programs = fetch_tv_program_details()

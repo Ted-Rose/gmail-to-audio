@@ -9,6 +9,8 @@ class Content(models.Model):
     url = models.URLField()
     content_rating = models.CharField(max_length=50, blank=True, null=True)
     rating_value = models.FloatField(blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    channel = models.CharField(max_length=100)
 
     def __str__(self):
         return f"{self.title} ({self.type}) - Rating: {self.rating_value}"
