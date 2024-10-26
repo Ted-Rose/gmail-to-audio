@@ -57,7 +57,7 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'fetcher': {
+        'tv_archive': {
             'handlers': ['file', 'console'],
             'level': 'INFO',
             'propagate': False,

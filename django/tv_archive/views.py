@@ -13,6 +13,9 @@ from difflib import SequenceMatcher
 import logging
 
 
+logger = logging.getLogger(__name__)
+
+
 def home(request):
     return render(request, 'home.html')
 
@@ -62,7 +65,11 @@ def get_ratings(query, content_type=None):
         json_data = script_tag.string
         if json_data:
             parsed_data = json.loads(json_data)
-            description = re.sub(r"&\w+;", "", parsed_data.get("description"))
+            description = parsed_data.get("description")
+            if description:
+                description = re.sub(r"&\w+;", "", parsed_data.get("description"))
+            else:
+                description = ""
 
             content_script_tags = soup.find_all('script', type='application/ld+json')
             content_script_tag = content_script_tags[0]
@@ -81,6 +88,7 @@ def get_ratings(query, content_type=None):
     return None
 
 def fetch_tv_program_details():
+  
     translator = Translator()
 
     channels = {
@@ -98,6 +106,8 @@ def fetch_tv_program_details():
       # Data is available for a span of 14 days
       for day in range(14):
           date = (oldest_date + timedelta(days=day)).strftime('%d-%m-%Y')
+          logger.info(f"Date: {date}")
+
           url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date}&channel={channel}]"
           print("url:", url)
           try:
@@ -118,7 +128,7 @@ def fetch_tv_program_details():
               title_lv = program.find('div', class_="tet-font__headline--s")
               title_lv = title_lv.text.strip()
 
-              # if title_lv != "Kas te? Es te! (atkārtojums)":
+              # if title_lv != "Emī un Rū. 4. sezona":
               #   continue             
 
               description_lv = program.find('div', class_="text tet-font__body--s")
@@ -140,10 +150,13 @@ def fetch_tv_program_details():
                       src='lv',
                       dest='en'
                   ).text
+                  print(f"text_lv: {text_lv}")
+                  print(f"text_eng: {text_eng}")
+                  logger.info(f"text_lv: {text_lv}")
+                  logger.info(f"text_lv: {text_eng}")
                   ratio = SequenceMatcher(None, text_eng, text_lv_to_eng).ratio()
-                  logging.info(f"text_lv: {text_lv}")
-                  logging.info(f"text_eng: {text_eng}")
-                  logging.info(f"ratio: {ratio}")
+                  logger.info(f"ratio: {ratio}")
+                  print(f"ratio: {ratio}")
                   if ratio < 0.5:
                       continue
                   print("ratio: ", ratio)
@@ -173,7 +186,7 @@ def fetch_tv_program_details():
                           'url': image_url,
                           'content_rating': ratings.get("content_rating", ""),
                           'rating_value': ratings.get("rating_value", None),
-                          'start_date': date,
+                          'start_date': date.strftime('%Y-%m-%d'),
                           'channel': channel
                       }
                   )
