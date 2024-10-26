@@ -1,8 +1,8 @@
-# # from django.shortcuts import render
+from django.shortcuts import render
 
 
-# def home(request):
-#     return render(request, 'home.html')
+def home(request):
+    return render(request, 'home.html')
 import json
 import requests
 from bs4 import BeautifulSoup
@@ -70,70 +70,79 @@ def fetch_tv_program_details():
     # Initialize sets to store unique 'type' and 'content_rating' values
     unique_types = set()
     unique_content_ratings = set()
-
+    channels = {
+        "viasat_kino": "viasat_kino",
+        "tv6_hd": "tv6_hd",
+        "tv3_hd": "tv3_hd",
+        "8tv_hd": "8tv_hd",
+        "ltv1_hd": "ltv1_hd",
+        "ltv7_hd": "ltv7_hd",
+        }
     # Oldest available date to fetch data
     oldest_date = (datetime.now() - timedelta(days=8))
-    # Data is available for a span of 16 days
-    for day in range(16):
-        date = (oldest_date + timedelta(days=day)).strftime('%d-%m-%Y')
-        url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date}&channel=tv6_hd"
-        print("url:", url)
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching program details: {e}")
-            return []
 
-        html_content = response.content
-        soup = BeautifulSoup(html_content, 'html.parser')
+    for channel in channels:
+      # Data is available for a span of 16 days
+      for day in range(16):
+          date = (oldest_date + timedelta(days=day)).strftime('%d-%m-%Y')
+          url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date}&channel={channel}]"
+          print("url:", url)
+          try:
+              response = requests.get(url)
+              response.raise_for_status()
+          except requests.exceptions.RequestException as e:
+              print(f"Error fetching program details: {e}")
+              return []
 
-        program_elements = soup.find_all('div', class_="expander-description")
+          html_content = response.content
+          soup = BeautifulSoup(html_content, 'html.parser')
 
-        programs = []
-        for program in program_elements:
-            program_data = {}
+          program_elements = soup.find_all('div', class_="expander-description")
 
-            title_element = program.find('div', class_="tet-font__headline--s")
-            if title_element:
-                program_data['title'] = title_element.text.strip()
+          programs = []
+          for program in program_elements:
+              program_data = {}
 
-            subtitle_element = program.find('div', class_="subtitle")
-            if subtitle_element:
-                subtitle_text = subtitle_element.text.strip()
-                subtitle_parts = subtitle_text.split('\n')
-                program_data['time'] = subtitle_parts[0].strip()
-                program_data['date'] = subtitle_parts[1].strip()
-                program_data['channel'] = subtitle_parts[2].strip()
+              title_element = program.find('div', class_="tet-font__headline--s")
+              if title_element:
+                  program_data['title'] = title_element.text.strip()
 
-            description_element = program.find('div', class_="text tet-font__body--s")
-            if description_element:
-                program_data['description'] = description_element.text.strip()
+              subtitle_element = program.find('div', class_="subtitle")
+              if subtitle_element:
+                  subtitle_text = subtitle_element.text.strip()
+                  subtitle_parts = subtitle_text.split('\n')
+                  program_data['time'] = subtitle_parts[0].strip()
+                  program_data['date'] = subtitle_parts[1].strip()
+                  program_data['channel'] = subtitle_parts[2].strip()
 
-            image_element = program.find('img')
-            if image_element:
-                program_data['image_url'] = image_element['src']
-            print("-" * 20)
-            print("title:", program_data['title'])
-            ratings = get_ratings(program_data['title'], 'tv')
-            if ratings:
-                print(f"IMDb Data for {program_data['title']}:")
-                print("Type:", ratings["type"])
-                print("Description:", ratings["description"])
-                print("Image:", ratings["image"])
-                print("URL:", ratings["url"])
-                print("Content Rating:", ratings["content_rating"])
-                print("Rating Value:", ratings["rating_value"])
-                if ratings["type"]:
-                    unique_types.add(ratings["type"])
-                    print("unique_types:\n", list(unique_types))
-                if ratings["content_rating"]:
-                    print("content_rating:\n", list(unique_content_ratings))
-                    unique_content_ratings.add(ratings["content_rating"])
-            else:
-                print(f"No data found for {program_data['title']}")
+              description_element = program.find('div', class_="text tet-font__body--s")
+              if description_element:
+                  program_data['description'] = description_element.text.strip()
 
-            programs.append(program_data)
+              image_element = program.find('img')
+              if image_element:
+                  program_data['image_url'] = image_element['src']
+              print("-" * 20)
+              print("title:", program_data['title'])
+              ratings = get_ratings(program_data['title'], 'tv')
+              if ratings:
+                  print(f"IMDb Data for {program_data['title']}:")
+                  print("Type:", ratings["type"])
+                  print("Description:", ratings["description"])
+                  print("Image:", ratings["image"])
+                  print("URL:", ratings["url"])
+                  print("Content Rating:", ratings["content_rating"])
+                  print("Rating Value:", ratings["rating_value"])
+                  if ratings["type"]:
+                      unique_types.add(ratings["type"])
+                      print("unique_types:\n", list(unique_types))
+                  if ratings["content_rating"]:
+                      print("content_rating:\n", list(unique_content_ratings))
+                      unique_content_ratings.add(ratings["content_rating"])
+              else:
+                  print(f"No data found for {program_data['title']}")
+
+              programs.append(program_data)
 
     return programs
 

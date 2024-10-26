@@ -1,7 +1,9 @@
 # Development logs
-7. Current deployment SOP:
-  1. `git pull`
-  2. 
+7. Creating venv localy on ubuntu:
+  - `pip install virtualenv`
+  - `virtualenv -p /usr/bin/python3.10 venv`
+  - `source venv/bin/activate`
+  - `pip install -r requirements.txt`
 6. Deployment on pythonanywhere:
     - `ssh-keygen -t rsa -b 4096 -C "your_email@example.com"`
         - Replace your_email@example.com with the email address associated with your GitHub account.
