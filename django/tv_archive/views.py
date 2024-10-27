@@ -114,7 +114,7 @@ def fetch_tv_program_details():
               response = requests.get(url)
               response.raise_for_status()
           except requests.exceptions.RequestException as e:
-              print(f"Error fetching program details: {e}")
+              logger.info(f"Error fetching program details: {e}")
               return []
 
           html_content = response.content
@@ -135,8 +135,8 @@ def fetch_tv_program_details():
               if description_lv:
                   description_lv = re.sub(r"&\w+;", "", description_lv.text.strip())
 
-              print("-" * 20)
-              print("title:", title_lv)
+              # print("-" * 20)
+              # print("title:", title_lv)
               ratings = get_ratings(title_lv, 'tv')
               if ratings:
                   if description_lv is None:
@@ -150,23 +150,21 @@ def fetch_tv_program_details():
                       src='lv',
                       dest='en'
                   ).text
-                  print(f"text_lv: {text_lv}")
-                  print(f"text_eng: {text_eng}")
                   logger.info(f"text_lv: {text_lv}")
                   logger.info(f"text_lv: {text_eng}")
                   ratio = SequenceMatcher(None, text_eng, text_lv_to_eng).ratio()
                   logger.info(f"ratio: {ratio}")
-                  print(f"ratio: {ratio}")
-                  print("ratio: ", ratio)
-                  print(f"IMDb Data for {title_lv}:")
-                  print("translated_description_lv:\n", text_lv_to_eng)
-                  print("Description ENG:", ratings["description"])
+                  # print(f"ratio: {ratio}")
+                  # print("ratio: ", ratio)
+                  # print(f"IMDb Data for {title_lv}:")
+                  # print("translated_description_lv:\n", text_lv_to_eng)
+                  # print("Description ENG:", ratings["description"])
 
-                  print("Type:", ratings["type"])
-                  print("Image:", ratings["image"])
-                  print("URL:", ratings["url"])
-                  print("Content Rating:", ratings["content_rating"])
-                  print("Rating Value:", ratings["rating_value"])
+                  # print("Type:", ratings["type"])
+                  # print("Image:", ratings["image"])
+                  # print("URL:", ratings["url"])
+                  # print("Content Rating:", ratings["content_rating"])
+                  # print("Rating Value:", ratings["rating_value"])
 
                   # Get image URL
                   image_element = program.find('img')
@@ -190,7 +188,7 @@ def fetch_tv_program_details():
                       }
                   )
               else:
-                  print(f"No data found for {title_lv}")
+                  logger.info(f"No data found for {title_lv}")
     return programs
 
-# programs = fetch_tv_program_details()
+programs = fetch_tv_program_details()
