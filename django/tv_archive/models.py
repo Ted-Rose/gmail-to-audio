@@ -11,6 +11,7 @@ class Content(models.Model):
     rating_value = models.FloatField(blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     channel = models.CharField(max_length=100)
+    ratio = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.title} ({self.type}) - Rating: {self.rating_value}"

@@ -157,8 +157,6 @@ def fetch_tv_program_details():
                   ratio = SequenceMatcher(None, text_eng, text_lv_to_eng).ratio()
                   logger.info(f"ratio: {ratio}")
                   print(f"ratio: {ratio}")
-                  if ratio < 0.5:
-                      continue
                   print("ratio: ", ratio)
                   print(f"IMDb Data for {title_lv}:")
                   print("translated_description_lv:\n", text_lv_to_eng)
@@ -187,11 +185,12 @@ def fetch_tv_program_details():
                           'content_rating': ratings.get("content_rating", ""),
                           'rating_value': ratings.get("rating_value", None),
                           'start_date': date.strftime('%Y-%m-%d'),
-                          'channel': channel
+                          'channel': channel,
+                          'ratio': ratio
                       }
                   )
               else:
                   print(f"No data found for {title_lv}")
     return programs
 
-programs = fetch_tv_program_details()
+# programs = fetch_tv_program_details()
