@@ -11,6 +11,10 @@ import re
 from googletrans import Translator
 from difflib import SequenceMatcher
 import logging
+from django.core.cache import cache
+
+def clear_django_cache():
+    cache.clear()
 
 
 logger = logging.getLogger(__name__)
@@ -29,7 +33,6 @@ def random_sleep(min_seconds=1, max_seconds=2):
 def get_ratings(query, content_type=None):
     # Encode the query with UTF-8 encoding and spaces replaced with '+'
     encoded_query = quote_plus(query, encoding='utf-8')
-
     filter = "?s=tt" if content_type == "movie" else ""
     url = f"https://www.imdb.com/find/{filter}?q={encoded_query}&ref_=nv_sr_sm"
     
@@ -88,16 +91,16 @@ def get_ratings(query, content_type=None):
     return None
 
 def fetch_tv_program_details():
-  
+    clear_django_cache() 
     translator = Translator()
 
     channels = {
-        "viasat_kino": "viasat_kino",
         "tv6_hd": "tv6_hd",
         "tv3_hd": "tv3_hd",
         "8tv_hd": "8tv_hd",
         "ltv1_hd": "ltv1_hd",
         "ltv7_hd": "ltv7_hd",
+        "viasat_kino": "viasat_kino",
         }
     # Oldest available date to fetch data
     oldest_date = (datetime.now() - timedelta(days=6))
@@ -105,14 +108,16 @@ def fetch_tv_program_details():
     for channel in channels:
       # Data is available for a span of 14 days
       for day in range(14):
-          date = (oldest_date + timedelta(days=day)).strftime('%d-%m-%Y')
+          date = (oldest_date + timedelta(days=day))
+          date_string = date.strftime('%d-%m-%Y')
           logger.info(f"Date: {date}")
 
-          url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date}&channel={channel}]"
+          url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date_string}&channel={channel}]"
           print("url:", url)
           try:
               response = requests.get(url)
               response.raise_for_status()
+              # print("response.content:", response.content)
           except requests.exceptions.RequestException as e:
               logger.info(f"Error fetching program details: {e}")
               return []
@@ -124,6 +129,8 @@ def fetch_tv_program_details():
 
           programs = []
           for program in program_elements:
+              # print("\nprogram_elements:\n", program_elements)
+              # print("\n program:\n", program)
 
               title_lv = program.find('div', class_="tet-font__headline--s")
               title_lv = title_lv.text.strip()
@@ -150,8 +157,12 @@ def fetch_tv_program_details():
                       src='lv',
                       dest='en'
                   ).text
+                  logger.info(f"description_lv: {description_lv}")
+                  logger.info(f"Description ENG: {ratings['description']}")
+                  logger.info(f"title_lv: {title_lv}")
+                  logger.info(f"ratings[name]: {ratings['name']}")
                   logger.info(f"text_lv: {text_lv}")
-                  logger.info(f"text_lv: {text_eng}")
+                  logger.info(f"text_eng: {text_eng}")
                   ratio = SequenceMatcher(None, text_eng, text_lv_to_eng).ratio()
                   logger.info(f"ratio: {ratio}")
                   # print(f"ratio: {ratio}")
@@ -171,7 +182,9 @@ def fetch_tv_program_details():
                   image_url = image_element['src'] if image_element else None
                   image_url = image_url or ratings.get("image")
                   image_url = image_url if image_url is not None else None
-
+                  print("date before update:", date)
+                  start_date = date.strftime('%Y-%m-%d')
+                  print("date after update:", start_date)
                   Content.objects.update_or_create(
                       title=title_lv,
                       defaults={
@@ -182,7 +195,7 @@ def fetch_tv_program_details():
                           'url': image_url,
                           'content_rating': ratings.get("content_rating", ""),
                           'rating_value': ratings.get("rating_value", None),
-                          'start_date': date.strftime('%Y-%m-%d'),
+                          'start_date': start_date,
                           'channel': channel,
                           'ratio': ratio
                       }
