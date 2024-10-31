@@ -65,6 +65,7 @@ def get_ratings(query, content_type=None):
 
     script_tags = soup.find_all('script', type='application/ld+json')
     if script_tags:
+        logger.info(f"SCRIPT_TAGS: \n {script_tags}")
         print("script_tags: ", script_tags)
         script_tag = script_tags[0]
         json_data = script_tag.string
@@ -110,14 +111,15 @@ def fetch_tv_program_details():
     oldest_date = (datetime.now() - timedelta(days=6))
 
     for channel in channels:
+      logger.info(f"Channel: {channel}")
       # Data is available for a span of 14 days
       for day in range(14):
           date = (oldest_date + timedelta(days=day))
           date_string = date.strftime('%d-%m-%Y')
           logger.info(f"Date: {date}")
 
-          # url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date_string}&channel={channel}]"
-          url = "https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date=31-10-2024&channel=tv6_hd"
+          url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date_string}&channel={channel}]"
+          # url = "https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date=31-10-2024&channel=tv6_hd"
           print("url:", url)
           try:
               response = requests.get(url)
@@ -142,6 +144,18 @@ def fetch_tv_program_details():
 
               # if title_lv != "Kliedziens 5 (2022)":
               #   continue             
+              if title_lv is None or title_lv in [
+                  'Panorāma',
+                  'Dienas ziņas',
+                  'Krustpunktā',
+                  'Rīta Panorāma',
+                  'Laika ziņas',
+                  'Sporta ziņas',
+                  'Nakts ziņas',
+                  'Kultūras ziņas',
+
+              ]:
+                continue             
 
               description_lv = program.find('div', class_="text tet-font__body--s")
               if description_lv:
@@ -151,23 +165,25 @@ def fetch_tv_program_details():
               # print("title:", title_lv)
               ratings = get_ratings(title_lv, 'tv')
               if ratings:
+                  print("-" * 100)
+                  title_ratio = 0
+                  description_ratio = 0
                   if title_lv:
                       title_lv_to_eng = translate_lv_to_eng(title_lv)
                       title_ratio = SequenceMatcher(None, ratings["title"], title_lv_to_eng).ratio()
+                      logger.info(f"TITLE LV: \n {title_lv}")
+                      logger.info(f"TITLE LV TO ENG: \n {title_lv_to_eng}")
+                      logger.info(f"TITLE ENG: \n {ratings['title']}")
+                      logger.info(f"TITLE RATIO: \n {title_ratio}")
                   if description_lv:
                       description_lv_to_eng = translate_lv_to_eng(description_lv)
                       description_ratio = SequenceMatcher(None, ratings["description"], description_lv_to_eng).ratio()
-                  print("-" * 100)
-                  logger.info(f"DESCRIPTION LV: \n {description_lv}")
-                  logger.info(f"DESCRIPTION LV TO ENG: \n {description_lv_to_eng}")
-                  logger.info(f"DESCRIPTION ENG: \n {ratings['description']}")
-                  logger.info(f"DESCRIPTION RATIO: \n {description_ratio}")
+                      logger.info(f"DESCRIPTION LV: \n {description_lv}")
+                      logger.info(f"DESCRIPTION LV TO ENG: \n {description_lv_to_eng}")
+                      logger.info(f"DESCRIPTION ENG: \n {ratings['description']}")
+                      logger.info(f"DESCRIPTION RATIO: \n {description_ratio}")
 
 
-                  logger.info(f"TITLE LV: \n {title_lv}")
-                  logger.info(f"TITLE LV TO ENG: \n {title_lv_to_eng}")
-                  logger.info(f"TITLE ENG: \n {ratings['title']}")
-                  logger.info(f"TITLE RATIO: \n {title_ratio}")
                   
                   ratio = max(title_ratio, description_ratio)
 
