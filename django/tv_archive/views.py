@@ -8,10 +8,11 @@ from datetime import datetime, timedelta
 import random
 from .models import Content
 import re
-from googletrans import Translator
 from difflib import SequenceMatcher
 import logging
 from django.core.cache import cache
+from django_apps.utils import translate_lv_to_eng
+
 
 def clear_django_cache():
     cache.clear()
@@ -41,8 +42,8 @@ def get_ratings(query, content_type=None):
     headers = {"User-Agent": user_agent}
     
     random_sleep()
-    response = requests.get(url, headers=headers)
-    html_content = response.content
+    search_results = requests.get(url, headers=headers)
+    html_content = search_results.content
     soup = BeautifulSoup(html_content, 'html.parser')
     summary = soup.find('div', class_="ipc-metadata-list-summary-item__tc")
     
@@ -58,17 +59,19 @@ def get_ratings(query, content_type=None):
         return None
 
     random_sleep()
-    response = requests.get(link, headers=headers)
-    html_content = response.content
+    content_description = requests.get(link, headers=headers)
+    html_content = content_description.content
     soup = BeautifulSoup(html_content, 'html.parser')
 
     script_tags = soup.find_all('script', type='application/ld+json')
     if script_tags:
+        print("script_tags: ", script_tags)
         script_tag = script_tags[0]
         json_data = script_tag.string
         if json_data:
             parsed_data = json.loads(json_data)
             description = parsed_data.get("description")
+            published_date = parsed_data.get("datePublished")
             if description:
                 description = re.sub(r"&\w+;", "", parsed_data.get("description"))
             else:
@@ -78,21 +81,22 @@ def get_ratings(query, content_type=None):
             content_script_tag = content_script_tags[0]
             content_json_data = content_script_tag.string
             content_parsed_data = json.loads(content_json_data)
-            content_name = content_parsed_data.get("name")
+            content_title = content_parsed_data.get("name")
             return {
-                "name": content_name,
+                "title": content_title,
                 "type": parsed_data.get("@type"),
                 "description": description,
                 "image": parsed_data.get("image"),
                 "url": parsed_data.get("url"),
                 "content_rating": parsed_data.get("contentRating"),
-                "rating_value": parsed_data.get("aggregateRating", {}).get("ratingValue")
+                "rating_value": parsed_data.get("aggregateRating", {}).get("ratingValue"),
+                "published_date": published_date,
             }
     return None
 
 def fetch_tv_program_details():
     clear_django_cache() 
-    translator = Translator()
+    
 
     channels = {
         "tv6_hd": "tv6_hd",
@@ -112,7 +116,8 @@ def fetch_tv_program_details():
           date_string = date.strftime('%d-%m-%Y')
           logger.info(f"Date: {date}")
 
-          url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date_string}&channel={channel}]"
+          # url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date_string}&channel={channel}]"
+          url = "https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date=31-10-2024&channel=tv6_hd"
           print("url:", url)
           try:
               response = requests.get(url)
@@ -125,17 +130,17 @@ def fetch_tv_program_details():
           html_content = response.content
           soup = BeautifulSoup(html_content, 'html.parser')
 
-          program_elements = soup.find_all('div', class_="expander-description")
+          contents = soup.find_all('div', class_="expander-description")
 
           programs = []
-          for program in program_elements:
-              # print("\nprogram_elements:\n", program_elements)
+          for program in contents:
+              # print("\ncontents:\n", contents)
               # print("\n program:\n", program)
 
               title_lv = program.find('div', class_="tet-font__headline--s")
               title_lv = title_lv.text.strip()
 
-              # if title_lv != "Emī un Rū. 4. sezona":
+              # if title_lv != "Kliedziens 5 (2022)":
               #   continue             
 
               description_lv = program.find('div', class_="text tet-font__body--s")
@@ -146,25 +151,28 @@ def fetch_tv_program_details():
               # print("title:", title_lv)
               ratings = get_ratings(title_lv, 'tv')
               if ratings:
-                  if description_lv is None:
-                      text_lv = title_lv
-                      text_eng = ratings["name"]
-                  else:
-                    text_lv = description_lv
-                    text_eng = ratings["description"]
-                  text_lv_to_eng = translator.translate(
-                      text_lv,
-                      src='lv',
-                      dest='en'
-                  ).text
-                  logger.info(f"description_lv: {description_lv}")
-                  logger.info(f"Description ENG: {ratings['description']}")
-                  logger.info(f"title_lv: {title_lv}")
-                  logger.info(f"ratings[name]: {ratings['name']}")
-                  logger.info(f"text_lv: {text_lv}")
-                  logger.info(f"text_eng: {text_eng}")
-                  ratio = SequenceMatcher(None, text_eng, text_lv_to_eng).ratio()
-                  logger.info(f"ratio: {ratio}")
+                  if title_lv:
+                      title_lv_to_eng = translate_lv_to_eng(title_lv)
+                      title_ratio = SequenceMatcher(None, ratings["title"], title_lv_to_eng).ratio()
+                  if description_lv:
+                      description_lv_to_eng = translate_lv_to_eng(description_lv)
+                      description_ratio = SequenceMatcher(None, ratings["description"], description_lv_to_eng).ratio()
+                  print("-" * 100)
+                  logger.info(f"DESCRIPTION LV: \n {description_lv}")
+                  logger.info(f"DESCRIPTION LV TO ENG: \n {description_lv_to_eng}")
+                  logger.info(f"DESCRIPTION ENG: \n {ratings['description']}")
+                  logger.info(f"DESCRIPTION RATIO: \n {description_ratio}")
+
+
+                  logger.info(f"TITLE LV: \n {title_lv}")
+                  logger.info(f"TITLE LV TO ENG: \n {title_lv_to_eng}")
+                  logger.info(f"TITLE ENG: \n {ratings['title']}")
+                  logger.info(f"TITLE RATIO: \n {title_ratio}")
+                  
+                  ratio = max(title_ratio, description_ratio)
+
+                  logger.info(f"IMDB DATE UPLOADED: \n {ratings['published_date']}")
+                  logger.info(f"RATIO:\n {ratio}")
                   # print(f"ratio: {ratio}")
                   # print("ratio: ", ratio)
                   # print(f"IMDb Data for {title_lv}:")
@@ -186,18 +194,21 @@ def fetch_tv_program_details():
                   start_date = date.strftime('%Y-%m-%d')
                   print("date after update:", start_date)
                   Content.objects.update_or_create(
-                      title=title_lv,
+                      url=ratings["url"],
                       defaults={
                           'type': ratings.get("type", ""),
+                          'title_lv': title_lv,
+                          'title_eng': ratings["title"],
                           'description_lv': description_lv,
                           'description_eng': ratings["description"],
                           'image': ratings.get("image", ""),
-                          'url': image_url,
+                          'url': ratings["url"],
+                          'image': image_url,
                           'content_rating': ratings.get("content_rating", ""),
                           'rating_value': ratings.get("rating_value", None),
                           'start_date': start_date,
                           'channel': channel,
-                          'ratio': ratio
+                          'ratio': ratio,
                       }
                   )
               else:

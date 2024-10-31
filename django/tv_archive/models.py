@@ -1,7 +1,8 @@
 from django.db import models
 
 class Content(models.Model):
-    title = models.CharField(max_length=255)
+    title_lv = models.CharField(max_length=255)
+    title_eng = models.CharField(max_length=255)
     type = models.CharField(max_length=100)
     description_lv = models.TextField(blank=True, null=True)
     description_eng = models.TextField(blank=True, null=True)

@@ -8,3 +8,4 @@ django/google_api/app_secrets.json
 django/settings.json
 django/ca.pem
 local_settings.json
+django/data/
