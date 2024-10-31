@@ -96,8 +96,7 @@ def get_ratings(query, content_type=None):
     return None
 
 def fetch_tv_program_details():
-    clear_django_cache() 
-    
+    clear_django_cache()
 
     channels = {
         "tv6_hd": "tv6_hd",
@@ -117,9 +116,8 @@ def fetch_tv_program_details():
           date = (oldest_date + timedelta(days=day))
           date_string = date.strftime('%d-%m-%Y')
           logger.info(f"Date: {date}")
-
-          url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date_string}&channel={channel}]"
-          # url = "https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date=31-10-2024&channel=tv6_hd"
+          url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date_string}&channel={channel}"
+        #   url = "https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date=31-10-2024&channel=tv6_hd"
           print("url:", url)
           try:
               response = requests.get(url)
