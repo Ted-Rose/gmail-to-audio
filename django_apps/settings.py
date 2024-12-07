@@ -14,26 +14,29 @@ from pathlib import Path
 import os
 import json
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Define the path to the local settings JSON file
-LOCAL_SETTINGS_PATH = os.path.join(BASE_DIR, 'local_settings.json')
+PRIVATE_SETTINGS_JSON_PATH = os.path.join(BASE_DIR, 'private_settings.json')
 
-# Load settings from the JSON file if it exists
-if os.path.isfile(LOCAL_SETTINGS_PATH):
-    with open(LOCAL_SETTINGS_PATH, 'r') as file:
-        local_settings = json.load(file)
-        SECRET_KEY = local_settings.get('SECRET_KEY')
-        DEBUG = local_settings.get('debug')
-        BASE_URL = local_settings.get('base_url')
+if os.path.isfile(PRIVATE_SETTINGS_JSON_PATH):
+    with open(PRIVATE_SETTINGS_JSON_PATH, 'r') as file:
+        private_settings = json.load(file)
+        SECRET_KEY = private_settings.get('SECRET_KEY')
+        DEBUG = private_settings.get('debug')
+        BASE_URL = private_settings.get('base_url')
+        DATABASES = private_settings.get('DATABASES')
 else:
-    raise FileNotFoundError(f'{LOCAL_SETTINGS_PATH} does not exist. Please provide a local_settings.json file.')
+  raise FileNotFoundError(f'Private settings do not exist. Please provide private settings.')
 
 ALLOWED_HOSTS = [
   'tedisrozenfelds.pythonanywhere.com',
-  '127.0.0.1'
+  '127.0.0.1',
+  '.vercel.app',
 ]
 
+# WSGI_APPLICATION = 'django_apps.wsgi.app'
+WSGI_APPLICATION = 'django_apps.wsgi.application'
 
 # Application definition
 
@@ -47,10 +50,6 @@ INSTALLED_APPS = [
     'google_api',
     'single_pages',
 ]
-
-if DEBUG:
-    # Redundant on pythonanywhere
-    INSTALLED_APPS.append('sslserver')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -83,18 +82,16 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'django_apps.wsgi.application'
-
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 
 # Password validation
@@ -130,8 +127,9 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+# STATICFILES_DIRS = [os.path.join(BASE_DIR, 'staticfiles')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles', 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -156,14 +154,6 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(BASE_DIR, 'django.log'),
-            'formatter': 'verbose',
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB
-            'backupCount': 3,  # Keep 3 backup files
-        },
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
@@ -172,17 +162,17 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'ERROR',
             'propagate': False,
         },
         'django.security': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
         },

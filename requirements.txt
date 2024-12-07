@@ -5,4 +5,6 @@ google-auth==2.31.0
 google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.0
 langdetect==1.0.9
-pyyaml==5.4.1
+beautifulsoup4==4.12.2
+googletrans==4.0.0-rc1
+psycopg2-binary==2.9.9
