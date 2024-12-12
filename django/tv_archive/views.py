@@ -118,6 +118,7 @@ def fetch_tv_program_details():
     clear_django_cache()
 
     channels = {
+        "filmzone_hd": "filmzone_hd",
         "tv6_hd": "tv6_hd",
         "tv3_hd": "tv3_hd",
         "viasat_kino": "viasat_kino",
