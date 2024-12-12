@@ -3,7 +3,7 @@ django/db.sqlite3
 django/django.log
 django/media/recordings/*
 !django/media/recordings/.gitkeep
-django/env
+django/venv
 django/google_api/app_secrets.json
 django/settings.json
 django/ca.pem
