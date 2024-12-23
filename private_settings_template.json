@@ -1,0 +1,19 @@
+{
+    "DATABASES": {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "django_apps",
+            "USER": "my_username",
+            "PASSWORD": "my_password",
+            "HOST": "superhost.com",
+            "PORT": "9999",
+            "OPTIONS": {
+                "sslmode": "verify-full",
+                "sslrootcert": "C:/Users/Me/projects/django_apps/ca.pem"
+            }
+        }
+    },
+    "DEBUG": "true",
+    "SECRET_KEY": "safe_key",
+    "base_url": "https://127.0.0.1:8000"
+}

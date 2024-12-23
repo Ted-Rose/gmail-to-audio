@@ -1,5 +1,0 @@
-{
-  "debug": true,
-  "SECRET_KEY": "safe_key",
-  "base_url": "https://127.0.0.1:8000"
-}

@@ -9,4 +9,4 @@ settings.json
 ca.pem
 data/
 staticfiles
-local_settings.json
+private_settings.json
