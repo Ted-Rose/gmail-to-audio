@@ -3,10 +3,10 @@ db.sqlite3
 django.log
 media/recordings/*
 !media/recordings/.gitkeep
-env
+venv
 google_api/app_secrets.json
-private_settings.json
+settings.json
 ca.pem
 data/
 staticfiles
-venv
+local_settings.json

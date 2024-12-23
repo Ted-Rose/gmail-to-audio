@@ -10,5 +10,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('google_api.urls', namespace='google_api')),
     path('', include('single_pages.urls', namespace='single_pages')),
+    path('', include('tv_archive.urls', namespace='tv_archive')),
     path('', views.home),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
