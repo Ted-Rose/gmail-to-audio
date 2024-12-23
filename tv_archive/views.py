@@ -204,7 +204,8 @@ def fetch_tv_program_details():
                         '900 sekundes',
                         'Kultūršoks',
                         'SuperBingo',
-                        'Kobra 17'
+                        'Kobra 17',
+                        'Tāskmāsters'
                     ]:
                         continue
 

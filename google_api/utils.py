@@ -16,6 +16,7 @@ import re
 from datetime import datetime
 from google_api import views
 from langdetect import detect, DetectorFactory
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger('django')
 
@@ -130,16 +131,13 @@ def get_messages(query, creds):
         
         for message in messages:
             message_id = message['id']
-            # Retrieve the raw message
             msg = service.users().messages().get(userId="me", id=message_id, format='raw').execute()
             msg_str = base64.urlsafe_b64decode(msg['raw'].encode('ASCII'))
             mime_message = BytesParser(policy=policy.default).parsebytes(msg_str)
 
-            # Extract the subject and from headers
             subject = mime_message['subject']
             sender = mime_message['from']
 
-            # Initialize the body
             body = None
             charset = mime_message.get_content_charset('utf-8')
             if mime_message.is_multipart():
@@ -147,14 +145,38 @@ def get_messages(query, creds):
                     if part.get_content_type() == 'text/plain':
                         body = part.get_payload(decode=True).decode(charset, errors='replace')
                         break
+                    elif part.get_content_type() == 'text/html':
+                        body = extract_text_from_html(part.get_payload(decode=True).decode(charset, errors='replace'))
+                        break
                 if not body:
-                    body = 'Multipart message without plain text part!'
+                    body = 'Multipart message without text part!'
             else:
                 body = mime_message.get_payload(decode=True).decode(charset, errors='replace')
-
-            # Try to remove any html elements if present
+            
             body = extract_text_from_html(body)
-            # Add message details to the list
+            if sender == "e-klase <notifikacijas@e-klase.lv>":
+                # Extract subject using a regular expression
+                subject_match = re.search(r"Tēma: (.*?)(?=No:)", body)
+                if subject_match:
+                    subject = subject_match.group(1).strip()
+
+                # Extract the main body content, excluding boilerplate, subject, and recipient info
+                body_pattern = r"Kam: ([\s\S]*?)(?=_______________________________________________Lai atbildētu vai pārsūtītu)"
+                body_match = re.search(body_pattern, body, re.DOTALL)
+                if body_match:
+                    body = body_match.group(1).strip()
+
+                    # Remove any remaining HTML tags
+                    soup = BeautifulSoup(body, 'html.parser')
+                    body = soup.get_text(separator=' ')
+
+                    # Remove extra whitespace
+                    body = re.sub(r'\s+', ' ', body).strip()
+
+                    body_start_pattern = r".*?Lai aplūkotu pielikumus, pieslēdzieties E-klasei\."
+                    new_body = re.sub(body_start_pattern, '', body, flags=re.DOTALL)
+                    body = new_body.strip()
+
             message_details.append({
                 'id': message_id,
                 'subject': subject,
