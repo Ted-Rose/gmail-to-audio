@@ -1,4 +1,7 @@
 from django.shortcuts import render
+from django.core.cache import cache
+from django.db.models import Q
+from django_apps.utils import translate_lv_to_eng
 import json
 import urllib3
 from bs4 import BeautifulSoup
@@ -10,19 +13,48 @@ from .models import Content
 import re
 from difflib import SequenceMatcher
 import logging
-from django.core.cache import cache
-from django_apps.utils import translate_lv_to_eng
+import certifi
 from urllib3.util.retry import Retry
 from urllib3.exceptions import MaxRetryError
-import certifi
-
-def clear_django_cache():
-    cache.clear()
 
 logger = logging.getLogger(__name__)
 
-def home(request):
-    return render(request, 'home.html')
+
+def content_list(request):
+    content_rating = request.GET.get('content_rating', None)
+    not_content_rating = request.GET.get('not_content_rating', None)
+    rating_value = request.GET.get('rating_value', None)
+    start_date = request.GET.get('start_date', None)
+    end_date = request.GET.get('end_date', None)
+    ratio = request.GET.get('ratio', None)
+    not_channel = request.GET.get('not_channel', None)
+    channel = request.GET.get('channel', None)
+
+    query = Q()
+    if content_rating:
+        query &= Q(content_rating=content_rating)
+    if rating_value:
+        query &= Q(rating_value__gte=rating_value)
+    if not_content_rating:
+        query &= ~Q(content_rating=not_content_rating)
+    if start_date:
+        query &= Q(start_date__gte=start_date)
+    if end_date:
+        query &= Q(start_date__lte=end_date)
+    if ratio:
+        query &= Q(ratio=ratio)
+    if not_channel:
+        query &= ~Q(channel=not_channel)
+    if channel:
+        query &= Q(channel=channel)
+
+    contents = Content.objects.filter(query)
+
+    context = {
+        'contents': contents,
+    }
+
+    return render(request, 'content_list.html', context)
 
 def random_sleep(min_seconds=1, max_seconds=2):
     """Sleeps for a random amount of time between min_seconds and max_seconds."""
@@ -42,12 +74,11 @@ def get_ratings(query, content_type=None):
     encoded_query = quote_plus(query, encoding='utf-8')
     filter = "?s=tt" if content_type == "movie" else ""
     url = f"https://www.imdb.com/find/{filter}?q={encoded_query}&ref_=nv_sr_sm"
-    
+
     # The user_agent is required to prevent 403 errors
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6446.75 Safari/537.36"
     headers = {"User-Agent": user_agent}
-    
-    # Perform search request with retry logic
+
     try:
         random_sleep()
         search_results = http.request("GET", url, headers=headers)
@@ -57,7 +88,7 @@ def get_ratings(query, content_type=None):
     except MaxRetryError:
         logger.error("Max retries exceeded for search request.")
         return None
-    
+
     if summary is None:
         logger.info(f"Summary not found for:\n {query}")
         return None
@@ -69,7 +100,6 @@ def get_ratings(query, content_type=None):
         logger.info("Link not found")
         return None
 
-    # Perform content description request with retry logic
     try:
         random_sleep()
         content_description = http.request("GET", link, headers=headers)
@@ -83,10 +113,10 @@ def get_ratings(query, content_type=None):
             json_data = script_tag.string
             if json_data:
                 parsed_data = json.loads(json_data)
-                
+
                 description = parsed_data.get("description", "")
                 description = re.sub(r"&\w+;", "", description)
-                
+
                 published_date = parsed_data.get("datePublished")
             if description:
                 description = re.sub(r"&\w+;", "", parsed_data.get("description"))
@@ -115,8 +145,6 @@ def get_ratings(query, content_type=None):
     return None
 
 def fetch_tv_program_details():
-    clear_django_cache()
-
     channels = {
         "filmzone_hd": "filmzone_hd",
         "tv6_hd": "tv6_hd",
@@ -136,19 +164,19 @@ def fetch_tv_program_details():
             logger.info(f"Date: {date}")
             url = f"https://www.tet.lv/televizija/tv-programma?tv-type=interactive&view-type=list&date={date_string}&channel={channel}"
             print("url:", url)
-        
+
             response = http.request("GET", url)
             html_content = response.data
             soup = BeautifulSoup(html_content, 'html.parser')
-            
+
             contents = soup.find_all('div', class_="expander-description")
             programs = []
-            
+
             for program in contents:
                 title_lv = program.find('div', class_="tet-font__headline--s")
                 if title_lv:
                     title_lv = title_lv.text.strip()
-                
+
                     if title_lv is None or title_lv in [
                         'Panorāma',
                         'Dienas ziņas',
@@ -158,9 +186,28 @@ def fetch_tv_program_details():
                         'Sporta ziņas',
                         'Nakts ziņas',
                         'Kultūras ziņas',
+                        'Saki Jā!',
+                        'Spiegu spēles',
+                        'De Facto',
+                        'Laika ziņas',
+                        'Basketbols.Basketbols: NBA.',
+                        'Leģendārais loms',
+                        'Rīta Panorāma',
+                        'Aizliegtais paņēmiens',
+                        'UgunsGrēks 4',
+                        'Vides fakti',
+                        'Aculiecinieks',
+                        '1 :1. Aktuālā intervija',
+                        'Sporta studija',
+                        'Autoziņas',
+                        'Bez Tabu',
+                        '900 sekundes',
+                        'Kultūršoks',
+                        'SuperBingo',
+                        'Kobra 17'
                     ]:
                         continue
-                    
+
                     description_lv = program.find('div', class_="text tet-font__body--s")
                     if description_lv:
                         description_lv = re.sub(r"&\w+;", "", description_lv.text.strip())
@@ -184,7 +231,7 @@ def fetch_tv_program_details():
                             logger.info(f"DESCRIPTION LV TO ENG: \n {description_lv_to_eng}")
                             logger.info(f"DESCRIPTION ENG: \n {ratings['description']}")
                             logger.info(f"DESCRIPTION RATIO: \n {description_ratio}")
-                        
+
                         ratio = max(title_ratio, description_ratio)
 
                         logger.info(f"IMDB DATE UPLOADED: \n {ratings['published_date']}")
@@ -214,4 +261,4 @@ def fetch_tv_program_details():
                     logger.info(f"No data found for {title_lv}")
     return programs
 
-programs = fetch_tv_program_details()
+# programs = fetch_tv_program_details()
